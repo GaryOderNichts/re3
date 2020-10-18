@@ -151,7 +151,15 @@ char* casepath(char const* path, bool checkPathFirst)
     DIR* d;
     if (p[0] == '/' || p[0] == '\\')
     {
+#ifdef __WIIU__
+        // skip the /vol/external01/ as we can't open the root
+        d = opendir("/vol/external01/");
+        p += 16;
+        strcpy(out, "/vol/external01");
+        rl += 15;
+#else
         d = opendir("/");
+#endif
     }
     else
     {
@@ -210,7 +218,7 @@ char* casepath(char const* path, bool checkPathFirst)
 
         if (!e)
         {
-            printf("casepath couldn't find dir/file \"%s\", full path was %s\n", c, path);
+            debug("casepath couldn't find dir/file \"%s\", full path was %s\n", c, path);
             // No match, add original name and continue converting further slashes.
             strcpy(out + rl, c);
             rl += strlen(c);
@@ -225,7 +233,7 @@ char* casepath(char const* path, bool checkPathFirst)
     }
 
     if (rl > l + 2) {
-        printf("\n\ncasepath: Corrected path length is longer then original+2:\n\tOriginal: %s (%d chars)\n\tCorrected: %s (%d chars)\n\n", path, l, out, rl);
+        debug("\n\ncasepath: Corrected path length is longer then original+2:\n\tOriginal: %s (%d chars)\n\tCorrected: %s (%d chars)\n\n", path, l, out, rl);
     }
     return out;
 }

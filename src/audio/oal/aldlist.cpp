@@ -276,30 +276,33 @@ int ALDeviceList::GetNextFilteredDevice()
  */
 unsigned int ALDeviceList::GetMaxNumSources()
 {
-	ALuint uiSources[256];
-	unsigned int iSourceCount = 0;
+	// ALuint uiSources[256];
+	// unsigned int iSourceCount = 0;
 
-	// Clear AL Error Code
-	alGetError();
+	// // Clear AL Error Code
+	// alGetError();
 
-	// Generate up to 256 Sources, checking for any errors
-	for (iSourceCount = 0; iSourceCount < 256; iSourceCount++)
-	{
-		alGenSources(1, &uiSources[iSourceCount]);
-		if (alGetError() != AL_NO_ERROR)
-			break;
-	}
+	// // Generate up to 256 Sources, checking for any errors
+	// for (iSourceCount = 0; iSourceCount < 256; iSourceCount++)
+	// {
+	// 	alGenSources(1, &uiSources[iSourceCount]);
+	// 	if (alGetError() != AL_NO_ERROR)
+	// 		break;
+	// }
 
-	// Release the Sources
-	alDeleteSources(iSourceCount, uiSources);
-	if (alGetError() != AL_NO_ERROR)
-	{
-		for (unsigned int i = 0; i < 256; i++)
-		{
-			alDeleteSources(1, &uiSources[i]);
-		}
-	}
+	// // Release the Sources
+	// alDeleteSources(iSourceCount, uiSources);
+	// if (alGetError() != AL_NO_ERROR)
+	// {
+	// 	for (unsigned int i = 0; i < 256; i++)
+	// 	{
+	// 		alDeleteSources(1, &uiSources[i]);
+	// 	}
+	// }
 
-	return iSourceCount;
+	// return iSourceCount;
+
+	// allocating sources until it errors seems to just crash. using a hardcoded value for now
+	return 100;
 }
 #endif

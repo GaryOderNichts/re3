@@ -229,18 +229,18 @@ release_existing()
 	
 	if ( IsFXSupported() )
 	{
-		if ( alIsEffect(ALEffect) )
+		if ( reAlIsEffect(ALEffect) )
 		{
-			alEffecti(ALEffect, AL_EFFECT_TYPE, AL_EFFECT_NULL);
-			alDeleteEffects(1, &ALEffect);
+			reAlEffecti(ALEffect, AL_EFFECT_TYPE, AL_EFFECT_NULL);
+			reAlDeleteEffects(1, &ALEffect);
 			ALEffect = AL_EFFECT_NULL;
 		}
 		
-		if (alIsAuxiliaryEffectSlot(ALEffectSlot))
+		if (reAlIsAuxiliaryEffectSlot(ALEffectSlot))
 		{
-			alAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
+			reAlAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
 			
-			alDeleteAuxiliaryEffectSlots(1, &ALEffectSlot);
+			reAlDeleteAuxiliaryEffectSlots(1, &ALEffectSlot);
 			ALEffectSlot = AL_EFFECTSLOT_NULL;
 		}
 	}
@@ -327,8 +327,8 @@ set_new_provider(int index)
 		
 		if ( alcIsExtensionPresent(ALDevice, (ALCchar*)ALC_EXT_EFX_NAME) )
 		{
-			alGenAuxiliaryEffectSlots(1, &ALEffectSlot);
-			alGenEffects(1, &ALEffect);
+			reAlGenAuxiliaryEffectSlots(1, &ALEffectSlot);
+			reAlGenEffects(1, &ALEffect);
 		}
 		
 		for ( int32 i = 0; i < MAX_STREAMS; i++ )
@@ -387,7 +387,7 @@ set_new_provider(int index)
 		if ( IsFXSupported() )
 		{
 			/**/
-			alAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, ALEffect);
+			reAlAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, ALEffect);
 			/**/
 			
 			for ( int32 i = 0; i < MAXCHANNELS; i++ )
@@ -1025,7 +1025,7 @@ cSampleManager::SetChannelReverbFlag(uint32 nChannel, uint8 nReverbFlag)
 	{
 		if ( IsFXSupported() )
 		{
-			alAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, ALEffect);
+			reAlAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, ALEffect);
 			
 			if ( nReverbFlag != 0 )
 				aChannel[nChannel].SetReverbMix(ALEffectSlot, _fEffectsLevel);
@@ -1444,6 +1444,17 @@ cSampleManager::InitialiseSampleBanks(void)
 	fpSampleDataHandle = op_open_file(SampleBankDataFilename, &e);
 #endif
 	fread(m_aSamples, sizeof(tSample), TOTAL_AUDIO_SAMPLES, fpSampleDescHandle);
+#ifdef BIGENDIAN
+	// fix endianess
+	for (int i = 0; i < TOTAL_AUDIO_SAMPLES; i++)
+	{
+		m_aSamples[i].nOffset = __builtin_bswap32(m_aSamples[i].nOffset);
+		m_aSamples[i].nSize = __builtin_bswap32(m_aSamples[i].nSize);
+		m_aSamples[i].nFrequency = __builtin_bswap32(m_aSamples[i].nFrequency);
+		m_aSamples[i].nLoopStart = __builtin_bswap32(m_aSamples[i].nLoopStart);
+		m_aSamples[i].nLoopEnd = __builtin_bswap32(m_aSamples[i].nLoopEnd);
+	}
+#endif
 #ifdef AUDIO_OPUS
 	int32 _nSampleDataEndOffset = m_aSamples[TOTAL_AUDIO_SAMPLES - 1].nOffset + m_aSamples[TOTAL_AUDIO_SAMPLES - 1].nSize;
 #endif

@@ -32,7 +32,13 @@ static myFILE myfiles[NUMFILES];
 #include <dirent.h>
 #include <errno.h>
 #include <unistd.h>
+
+#ifdef __WIIU__
+// The default getcwd prefixes with fs: which causes issues with some functions
+extern "C" char *_getcwd (char *__buf, size_t __size);
+#else
 #define _getcwd getcwd
+#endif
 
 // Case-insensitivity on linux (from https://github.com/OneSadCookie/fcaseopen)
 void mychdir(char const *path)

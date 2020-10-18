@@ -84,6 +84,47 @@ int MapIdToButtonId(int mapId) {
 			return 0;
 	}
 }
+#elif __WIIU__
+#include <whb/log.h>
+int MapIdToButtonId(int mapId) {
+	switch (mapId) {
+		case VPAD_BUTTON_A: // Cross
+			return 2;
+		case VPAD_BUTTON_B: // Circle
+			return 1;
+		case VPAD_BUTTON_X: // Square
+			return 3;
+		case VPAD_BUTTON_Y: // Triangle
+			return 4;
+		case VPAD_BUTTON_ZL:
+			return 7;
+		case VPAD_BUTTON_ZR:
+			return 8;
+		// case GLFW_GAMEPAD_BUTTON_BACK:
+		// 	return 9;
+		case VPAD_BUTTON_PLUS:
+			return 12;
+		case VPAD_BUTTON_STICK_L:
+			return 10;
+		case VPAD_BUTTON_STICK_R:
+			return 11;
+		case VPAD_BUTTON_UP:
+			return 13;
+		case VPAD_BUTTON_RIGHT:
+			return 14;
+		case VPAD_BUTTON_DOWN:
+			return 15;
+		case VPAD_BUTTON_LEFT:
+			return 16;
+		// GLFW sends those as axes, so I added them here manually.
+		case 15: // Left trigger
+			return 5;
+		case 16: // Right trigger
+			return 6;
+		default:
+			return 0;
+	}
+}
 #endif
 
 int32 CControllerConfigManager::GetJoyButtonJustDown()
@@ -110,6 +151,8 @@ int32 CControllerConfigManager::GetJoyButtonJustDown()
 				return i + 1;
 		}
 	}
+#elif defined __WIIU__
+	return MapIdToButtonId(m_NewState.status.trigger);
 #endif
 	return 0;
 }
@@ -2391,6 +2434,11 @@ void CControllerConfigManager::UpdateJoyButtonState(int32 padnumber)
 		for (int32 i = 0; i < Min(m_NewState.numButtons, MAX_BUTTONS); i++) {
 			m_aButtonStates[i] = m_NewState.buttons[i];
 		}
+	}
+#elif defined __WIIU__
+	for (int i = 0; i < MAX_BUTTONS; i++)
+	{
+		m_aButtonStates[MapIdToButtonId(i)-1] = m_NewState.mappedButtons[i];
 	}
 #endif
 }

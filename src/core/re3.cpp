@@ -38,6 +38,11 @@
 #include <stdarg.h>
 #endif
 
+#ifdef __WIIU__
+#include <coreinit/debug.h>
+#include <whb/log.h>
+#endif
+
 #include <list>
 
 #ifdef RWLIBS
@@ -807,6 +812,9 @@ void re3_assert(const char *expr, const char *filename, unsigned int lineno, con
 		return;
 
 	abort();
+#elif __WIIU__
+	WHBLogPrintf("\nRE3 ASSERT FAILED\n\tFile: %s\n\tLine: %d\n\tFunction: %s\n\tExpression: %s\n",filename,lineno,func,expr);
+	OSFatal("RE3 ASSERT FAILED");
 #else
 	// TODO
 	printf("\nRE3 ASSERT FAILED\n\tFile: %s\n\tLine: %d\n\tFunction: %s\n\tExpression: %s\n",filename,lineno,func,expr);
@@ -825,7 +833,11 @@ void re3_debug(const char *format, ...)
 #endif
 	va_end(va);
 
+#ifdef __WIIU__
+	WHBLogPrintf("%s", re3_buff);
+#else
 	printf("%s", re3_buff);
+#endif
 	CDebug::DebugAddText(re3_buff);
 }
 
@@ -864,7 +876,11 @@ void re3_usererror(const char *format, ...)
 	_exit(3);
 #else
 	vsprintf(re3_buff, format, va);
+#ifdef __WIIU__
+	WHBLogPrintf("\nRE3 Error!\n\t%s\n",re3_buff);
+#else
 	printf("\nRE3 Error!\n\t%s\n",re3_buff);
+#endif
 	assert(false);
 #endif
 }

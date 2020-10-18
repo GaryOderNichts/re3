@@ -25,6 +25,10 @@ enum eWinVersion
 extern DWORD _dwOperatingSystemVersion;
 #define fcaseopen fopen
 #else
+#ifdef __WIIU__
+#include "wiiu.h"
+#endif
+
 char *strupr(char *str);
 char *strlwr(char *str);
 

@@ -5,6 +5,10 @@
 #include <dinput.h>
 #endif
 
+#ifdef __WIIU__
+#include <vpad/input.h>
+#endif
+
 // based on x-gtasa
 
 enum eControllerType
@@ -113,6 +117,15 @@ struct GlfwJoyState {
 };
 #endif
 
+#ifdef __WIIU__
+struct WiiUJoyState {
+	int8 id;
+	bool isGamepad;
+	VPADStatus status;
+	bool mappedButtons[17];
+};
+#endif
+
 class CControllerConfigManager
 {
 public:
@@ -132,6 +145,9 @@ public:
 #if defined RW_GL3
 	GlfwJoyState           m_OldState;
 	GlfwJoyState           m_NewState;
+#elif __WIIU__
+	WiiUJoyState       	  m_OldState;
+	WiiUJoyState		  m_NewState;
 #else
 	DIJOYSTATE2           m_OldState;
 	DIJOYSTATE2           m_NewState;
