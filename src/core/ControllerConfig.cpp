@@ -84,47 +84,6 @@ int MapIdToButtonId(int mapId) {
 			return 0;
 	}
 }
-#elif __WIIU__
-#include <whb/log.h>
-int MapIdToButtonId(int mapId) {
-	switch (mapId) {
-		case VPAD_BUTTON_A: // Cross
-			return 2;
-		case VPAD_BUTTON_B: // Circle
-			return 1;
-		case VPAD_BUTTON_X: // Square
-			return 3;
-		case VPAD_BUTTON_Y: // Triangle
-			return 4;
-		case VPAD_BUTTON_ZL:
-			return 7;
-		case VPAD_BUTTON_ZR:
-			return 8;
-		// case GLFW_GAMEPAD_BUTTON_BACK:
-		// 	return 9;
-		case VPAD_BUTTON_PLUS:
-			return 12;
-		case VPAD_BUTTON_STICK_L:
-			return 10;
-		case VPAD_BUTTON_STICK_R:
-			return 11;
-		case VPAD_BUTTON_UP:
-			return 13;
-		case VPAD_BUTTON_RIGHT:
-			return 14;
-		case VPAD_BUTTON_DOWN:
-			return 15;
-		case VPAD_BUTTON_LEFT:
-			return 16;
-		// GLFW sends those as axes, so I added them here manually.
-		case 15: // Left trigger
-			return 5;
-		case 16: // Right trigger
-			return 6;
-		default:
-			return 0;
-	}
-}
 #endif
 
 int32 CControllerConfigManager::GetJoyButtonJustDown()
@@ -152,7 +111,40 @@ int32 CControllerConfigManager::GetJoyButtonJustDown()
 		}
 	}
 #elif defined __WIIU__
-	return MapIdToButtonId(m_NewState.status.trigger);
+	uint32 triggerButtons = m_NewState.status.trigger;
+
+	if (triggerButtons & VPAD_BUTTON_A)
+		return 2;
+	else if (triggerButtons & VPAD_BUTTON_B)
+		return 1;
+	else if (triggerButtons & VPAD_BUTTON_X)
+		return 3;
+	else if (triggerButtons & VPAD_BUTTON_Y)
+		return 4;
+	else if (triggerButtons & VPAD_BUTTON_ZL)
+		return 7;
+	else if (triggerButtons & VPAD_BUTTON_ZR)
+		return 8;
+	else if (triggerButtons & VPAD_BUTTON_MINUS)
+		return 9;
+	else if (triggerButtons & VPAD_BUTTON_PLUS)
+		return 12;
+	else if (triggerButtons & VPAD_BUTTON_STICK_L)
+		return 10;
+	else if (triggerButtons & VPAD_BUTTON_STICK_R)
+		return 11;
+	else if (triggerButtons & VPAD_BUTTON_UP)
+		return 13;
+	else if (triggerButtons & VPAD_BUTTON_RIGHT)
+		return 14;
+	else if (triggerButtons & VPAD_BUTTON_DOWN)
+		return 15;
+	else if (triggerButtons & VPAD_BUTTON_LEFT)
+		return 16;
+	else if (triggerButtons & VPAD_BUTTON_L)
+		return 5;
+	else if (triggerButtons & VPAD_BUTTON_R)
+		return 6;
 #endif
 	return 0;
 }
@@ -2436,10 +2428,40 @@ void CControllerConfigManager::UpdateJoyButtonState(int32 padnumber)
 		}
 	}
 #elif defined __WIIU__
-	for (int i = 0; i < MAX_BUTTONS; i++)
-	{
-		m_aButtonStates[MapIdToButtonId(i)-1] = m_NewState.mappedButtons[i];
-	}
+	uint32 heldButtons = m_NewState.status.hold;
+
+	if (heldButtons & VPAD_BUTTON_A)
+		m_aButtonStates[1] = 1;
+	else if (heldButtons & VPAD_BUTTON_B)
+		m_aButtonStates[0] = 1;
+	else if (heldButtons & VPAD_BUTTON_X)
+		m_aButtonStates[2] = 1;
+	else if (heldButtons & VPAD_BUTTON_Y)
+		m_aButtonStates[3] = 1;
+	else if (heldButtons & VPAD_BUTTON_ZL)
+		m_aButtonStates[6] = 1;
+	else if (heldButtons & VPAD_BUTTON_ZR)
+		m_aButtonStates[7] = 1;
+	else if (heldButtons & VPAD_BUTTON_MINUS)
+		m_aButtonStates[8] = 1;
+	else if (heldButtons & VPAD_BUTTON_PLUS)
+		m_aButtonStates[11] = 1;
+	else if (heldButtons & VPAD_BUTTON_STICK_L)
+		m_aButtonStates[9] = 1;
+	else if (heldButtons & VPAD_BUTTON_STICK_R)
+		m_aButtonStates[10] = 1;
+	else if (heldButtons & VPAD_BUTTON_UP)
+		m_aButtonStates[12] = 1;
+	else if (heldButtons & VPAD_BUTTON_RIGHT)
+		m_aButtonStates[13] = 1;
+	else if (heldButtons & VPAD_BUTTON_DOWN)
+		m_aButtonStates[14] = 1;
+	else if (heldButtons & VPAD_BUTTON_LEFT)
+		m_aButtonStates[15] = 1;
+	else if (heldButtons & VPAD_BUTTON_L)
+		m_aButtonStates[4] = 1;
+	else if (heldButtons & VPAD_BUTTON_R)
+		m_aButtonStates[5] = 1;
 #endif
 }
 
