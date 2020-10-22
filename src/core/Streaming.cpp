@@ -381,6 +381,10 @@ CStreaming::LoadCdDirectory(const char *dirname, int n)
 	imgSelector = n<<24;
 	assert(sizeof(direntry) == 32);
 	while(CFileMgr::Read(fd, (char*)&direntry, sizeof(direntry))){
+#ifdef BIGENDIAN
+		direntry.offset = BSWAP32(direntry.offset);
+		direntry.size = BSWAP32(direntry.size);
+#endif
 		dot = strchr(direntry.name, '.');
 		if(dot) *dot = '\0';
 		if(direntry.size > (uint32)ms_streamingBufferSize)

@@ -174,6 +174,7 @@ char* casepath(char const* path, bool checkPathFirst)
     char* c;
     while (c = strsep(&p, "/\\"))
     {
+        debug("sep string from %s is %s", p, c);
         // May be trailing slash(allow), slash at the start(avoid), or multiple slashes(avoid)
         if (*c == '\0')
         {

@@ -71,7 +71,7 @@ RwTexDictionaryGtaStreamRead(RwStream *stream)
 		return nil;
 
 #ifdef BIGENDIAN
-	numTextures = __builtin_bswap32(numTextures);
+	numTextures = BSWAP32(numTextures);
 #endif
 
 	texDict = RwTexDictionaryCreate();

@@ -119,10 +119,7 @@ struct GlfwJoyState {
 
 #ifdef __WIIU__
 struct WiiUJoyState {
-	int8 id;
-	bool isGamepad;
 	VPADStatus status;
-	bool mappedButtons[17];
 };
 #endif
 

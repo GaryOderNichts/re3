@@ -78,6 +78,18 @@ typedef int64_t int64;
 // hardcode ucs-2
 typedef uint16_t wchar;
 
+#ifdef BIGENDIAN
+inline float _floatswap32(float f)
+{
+	uint32_t _swapval = __builtin_bswap32(*(uint32_t*)&f);
+    return *(float*)&_swapval;
+}
+
+#define BSWAP32(x) __builtin_bswap32(x)
+#define BSWAP16(x) __builtin_bswap16(x)
+#define FLOATSWAP32(x) _floatswap32(x)
+#endif
+
 #ifndef nil
 #define nil NULL
 #endif

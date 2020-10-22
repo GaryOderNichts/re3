@@ -284,7 +284,7 @@ psInitialize(void)
 #endif
     // TODO: Is there a way to get free ram on wiiu?
 
-	_dwMemAvailPhys = 1024; //systemInfo.freeram;
+	_dwMemAvailPhys = 1024*1024*170; //systemInfo.freeram;
 	_dwOperatingSystemVersion = OS_WINXP; // To fool other classes
 
 	// debug("Physical memory size %u\n", systemInfo.totalram);
@@ -1381,9 +1381,6 @@ void CapturePad(RwInt32 padID)
 	}
 
 	memcpy(&ControlsManager.m_NewState.status, &status, sizeof(VPADStatus));
-
-	ControlsManager.m_NewState.id = 0;
-	ControlsManager.m_NewState.isGamepad = true;
 
 	// if (ControlsManager.m_NewState.isGamepad)
 	// {

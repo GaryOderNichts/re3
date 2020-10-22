@@ -193,6 +193,9 @@ CFileLoader::LoadCollisionFile(const char *filename)
 
 	while(CFileMgr::Read(fd, (char*)&header, sizeof(header))){
 		assert(strncmp(header.ident, "COLL", 4) == 0);
+#ifdef BIGENDIAN
+		header.size = BSWAP32(header.size);
+#endif
 		CFileMgr::Read(fd, (char*)work_buff, header.size);
 		memcpy(modelname, work_buff, 24);
 
@@ -218,6 +221,7 @@ CFileLoader::LoadCollisionModel(uint8 *buf, CColModel &model, char *modelname)
 {
 	int i;
 
+#ifndef BIGENDIAN
 	model.boundingSphere.radius = *(float*)(buf);
 	model.boundingSphere.center.x = *(float*)(buf+4);
 	model.boundingSphere.center.y = *(float*)(buf+8);
@@ -229,59 +233,142 @@ CFileLoader::LoadCollisionModel(uint8 *buf, CColModel &model, char *modelname)
 	model.boundingBox.max.y = *(float*)(buf+32);
 	model.boundingBox.max.z = *(float*)(buf+36);
 	model.numSpheres = *(int16*)(buf+40);
+#else
+	// TODO make a macro for those buf to float bswaps
+	// wtf is 0 | 128?
+	model.boundingSphere.radius = FLOATSWAP32(*(float*)(buf));
+	model.boundingSphere.center.x = FLOATSWAP32(*(float*)(buf+4));
+	model.boundingSphere.center.y = FLOATSWAP32(*(float*)(buf+8));
+	model.boundingSphere.center.z = FLOATSWAP32(*(float*)(buf+12));
+	model.boundingBox.min.x = FLOATSWAP32(*(float*)(buf+16));
+	model.boundingBox.min.y = FLOATSWAP32(*(float*)(buf+20));
+	model.boundingBox.min.z = FLOATSWAP32(*(float*)(buf+24));
+	model.boundingBox.max.x = FLOATSWAP32(*(float*)(buf+28));
+	model.boundingBox.max.y = FLOATSWAP32(*(float*)(buf+32));
+	model.boundingBox.max.z = FLOATSWAP32(*(float*)(buf+36));
+	model.numSpheres = (int16) BSWAP16(*(uint16*)(buf+40));
+#endif
+
 	buf += 44;
 	if(model.numSpheres > 0){
 		model.spheres = (CColSphere*)RwMalloc(model.numSpheres*sizeof(CColSphere));
 		for(i = 0; i < model.numSpheres; i++){
+#ifndef BIGENDIAN
 			model.spheres[i].Set(*(float*)buf, *(CVector*)(buf+4), buf[16], buf[17]);
+#else
+			float radius = FLOATSWAP32(*(float*)buf);
+			CVector center = *(CVector*)(buf+4);
+			center.x = FLOATSWAP32(center.x);
+			center.y = FLOATSWAP32(center.y);
+			center.z = FLOATSWAP32(center.z);
+			model.spheres[i].Set(radius, center, buf[16], buf[17]);
+#endif
 			buf += 20;
 		}
 	}else
 		model.spheres = nil;
 
+#ifndef BIGENDIAN
 	model.numLines = *(int16*)buf;
+#else
+	model.numLines = (int16) BSWAP16(*(uint16*)buf);
+#endif
 	buf += 4;
 	if(model.numLines > 0){
 		model.lines = (CColLine*)RwMalloc(model.numLines*sizeof(CColLine));
 		for(i = 0; i < model.numLines; i++){
+#ifndef BIGENDIAN
 			model.lines[i].Set(*(CVector*)buf, *(CVector*)(buf+12));
+#else
+			CVector p0 = *(CVector*)buf;
+			p0.x = FLOATSWAP32(p0.x);
+			p0.y = FLOATSWAP32(p0.y);
+			p0.z = FLOATSWAP32(p0.z);
+			CVector p1 = *(CVector*)(buf+12);
+			p1.x = FLOATSWAP32(p1.x);
+			p1.y = FLOATSWAP32(p1.y);
+			p1.z = FLOATSWAP32(p1.z);
+			model.lines[i].Set(p0, p1);
+#endif
 			buf += 24;
 		}
 	}else
 		model.lines = nil;
 
+#ifndef BIGENDIAN
 	model.numBoxes = *(int16*)buf;
+#else
+	model.numBoxes = (int16) BSWAP16(*(uint16*)buf);
+#endif
 	buf += 4;
 	if(model.numBoxes > 0){
 		model.boxes = (CColBox*)RwMalloc(model.numBoxes*sizeof(CColBox));
 		for(i = 0; i < model.numBoxes; i++){
+#ifndef BIGENDIAN
 			model.boxes[i].Set(*(CVector*)buf, *(CVector*)(buf+12), buf[24], buf[25]);
+#else
+			CVector min = *(CVector*)buf;
+			min.x = FLOATSWAP32(min.x);
+			min.y = FLOATSWAP32(min.y);
+			min.z = FLOATSWAP32(min.z);
+			CVector max = *(CVector*)(buf+12);
+			max.x = FLOATSWAP32(max.x);
+			max.y = FLOATSWAP32(max.y);
+			max.z = FLOATSWAP32(max.z);
+			model.boxes[i].Set(min, max, buf[24], buf[25]);
+#endif
 			buf += 28;
 		}
 	}else
 		model.boxes = nil;
 
+#ifndef BIGENDIAN
 	int32 numVertices = *(int16*)buf;
+#else
+	int32 numVertices = (int16) BSWAP16(*(uint16*)buf);
+#endif
 	buf += 4;
 	if(numVertices > 0){
 		model.vertices = (CompressedVector*)RwMalloc(numVertices*sizeof(CompressedVector));
 		for(i = 0; i < numVertices; i++){
+#ifndef BIGENDIAN
 			model.vertices[i].Set(*(float*)buf, *(float*)(buf+4), *(float*)(buf+8));
 			if(Abs(*(float*)buf) >= 256.0f ||
 			   Abs(*(float*)(buf+4)) >= 256.0f ||
 			   Abs(*(float*)(buf+8)) >= 256.0f)
 				printf("%s:Collision volume too big\n", modelname);
+#else
+			float x = FLOATSWAP32(*(float*)buf);
+			float y = FLOATSWAP32(*(float*)(buf+4));
+			float z = FLOATSWAP32(*(float*)(buf+8));
+			model.vertices[i].Set(x, y, z);
+			if(Abs(x) >= 256.0f ||
+			   Abs(y) >= 256.0f ||
+			   Abs(z) >= 256.0f)
+				printf("%s:Collision volume too big\n", modelname);			
+#endif
 			buf += 12;
 		}
 	}else
 		model.vertices = nil;
 
+#ifndef BIGENDIAN
 	model.numTriangles = *(int16*)buf;
+#else
+	model.numTriangles = (int16) BSWAP16(*(uint16*)buf);
+#endif
 	buf += 4;
 	if(model.numTriangles > 0){
 		model.triangles = (CColTriangle*)RwMalloc(model.numTriangles*sizeof(CColTriangle));
 		for(i = 0; i < model.numTriangles; i++){
+#ifndef BIGENDIAN
 			model.triangles[i].Set(model.vertices, *(int32*)buf, *(int32*)(buf+4), *(int32*)(buf+8), buf[12], buf[13]);
+#else
+			int32 a = (int32) BSWAP32(*(uint32*)buf);
+			int32 b = (int32) BSWAP32(*(uint32*)(buf+4));
+			int32 c = (int32) BSWAP32(*(uint32*)(buf+8));
+			model.triangles[i].Set(model.vertices, a, b, c, buf[12], buf[13]);
+#endif
 			buf += 16;
 		}
 	}else

@@ -1448,11 +1448,11 @@ cSampleManager::InitialiseSampleBanks(void)
 	// fix endianess
 	for (int i = 0; i < TOTAL_AUDIO_SAMPLES; i++)
 	{
-		m_aSamples[i].nOffset = __builtin_bswap32(m_aSamples[i].nOffset);
-		m_aSamples[i].nSize = __builtin_bswap32(m_aSamples[i].nSize);
-		m_aSamples[i].nFrequency = __builtin_bswap32(m_aSamples[i].nFrequency);
-		m_aSamples[i].nLoopStart = __builtin_bswap32(m_aSamples[i].nLoopStart);
-		m_aSamples[i].nLoopEnd = __builtin_bswap32(m_aSamples[i].nLoopEnd);
+		m_aSamples[i].nOffset = BSWAP32(m_aSamples[i].nOffset);
+		m_aSamples[i].nSize = BSWAP32(m_aSamples[i].nSize);
+		m_aSamples[i].nFrequency = BSWAP32(m_aSamples[i].nFrequency);
+		m_aSamples[i].nLoopStart = BSWAP32(m_aSamples[i].nLoopStart);
+		m_aSamples[i].nLoopEnd = BSWAP32(m_aSamples[i].nLoopEnd);
 	}
 #endif
 #ifdef AUDIO_OPUS

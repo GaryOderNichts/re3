@@ -913,6 +913,8 @@ RwInt32 _rwD3D8FindCorrectRasterFormat(RwRasterType type, RwInt32 flags)
 {
 #ifdef RW_GL3
 	return '3LGO';
+#elif __WIIU__
+	return 'UIIW';
 #endif
 	return flags & 0xF00;
 }

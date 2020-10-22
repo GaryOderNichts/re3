@@ -71,7 +71,7 @@ CText::Load(void)
 		sectlen = (int)filedata[offset+3]<<24 | (int)filedata[offset+2]<<16 |
 			(int)filedata[offset+1]<<8 | (int)filedata[offset+0];
 #ifdef BIGENDIAN
-		sectlen = __builtin_bswap32(sectlen);
+		sectlen = BSWAP32(sectlen);
 #endif
 		offset += 4;
 		if(sectlen != 0){
