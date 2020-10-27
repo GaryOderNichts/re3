@@ -109,6 +109,10 @@ RwTexDictionaryGtaStreamRead1(RwStream *stream)
 	if(RwStreamRead(stream, &numTextures, size) != size)
 		return nil;
 
+#ifdef BIGENDIAN
+	numTextures = BSWAP32(numTextures);
+#endif
+
 	texDict = RwTexDictionaryCreate();
 	if(texDict == nil)
 		return nil;
@@ -325,8 +329,14 @@ CreateTxdImageForVideoCard()
 					RwStreamWrite(img, buf, num);
 				}
 
+#ifndef BIGENDIAN
 				dirInfo.offset = pos / CDSTREAM_SECTOR_SIZE;
 				dirInfo.size = size;
+#else
+				// Save as little endian for consistancy
+				dirInfo.offset = BSWAP32(pos / CDSTREAM_SECTOR_SIZE);
+				dirInfo.size = BSWAP32(size);
+#endif
 				strncpy(dirInfo.name, filename, sizeof(dirInfo.name));
 				pDir->AddItem(dirInfo);
 				CStreaming::RemoveTxd(i);

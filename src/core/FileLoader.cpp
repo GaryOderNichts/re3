@@ -234,8 +234,6 @@ CFileLoader::LoadCollisionModel(uint8 *buf, CColModel &model, char *modelname)
 	model.boundingBox.max.z = *(float*)(buf+36);
 	model.numSpheres = *(int16*)(buf+40);
 #else
-	// TODO make a macro for those buf to float bswaps
-	// wtf is 0 | 128?
 	model.boundingSphere.radius = FLOATSWAP32(*(float*)(buf));
 	model.boundingSphere.center.x = FLOATSWAP32(*(float*)(buf+4));
 	model.boundingSphere.center.y = FLOATSWAP32(*(float*)(buf+8));

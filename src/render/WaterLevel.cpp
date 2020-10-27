@@ -35,7 +35,7 @@ bool CWaterLevel::WavesCalculatedThisFrame;
 RpAtomic *CWaterLevel::ms_pWavyAtomic;
 RpGeometry *CWaterLevel::apGeomArray[8];
 int16 CWaterLevel::nGeomUsed;
-//"Custom" Don´t Render Water Toggle
+//"Custom" Donï¿½t Render Water Toggle
 bool gbDontRenderWater;
 
 //RwTexture *gpWaterTex;
@@ -75,6 +75,19 @@ CWaterLevel::Initialise(Const char *pWaterDat)
 			CFileMgr::Read(hFile, (char *)ms_aWaterRects, sizeof(ms_aWaterRects));
 			CFileMgr::Read(hFile, (char *)aWaterBlockList, sizeof(aWaterBlockList));
 			CFileMgr::Read(hFile, (char *)aWaterFineBlockList, sizeof(aWaterFineBlockList));
+#ifdef BIGENDIAN
+			ms_nNoOfWaterLevels = BSWAP32(ms_nNoOfWaterLevels);
+			for (int i = 0; i < 48; i++)
+				ms_aWaterZs[i] = FLOATSWAP32(ms_aWaterZs[i]);
+			for (int i = 0; i < 48; i++)
+			{
+				CRect* r = &ms_aWaterRects[i];
+				r->left = FLOATSWAP32(r->left);
+				r->bottom = FLOATSWAP32(r->bottom);
+				r->right = FLOATSWAP32(r->right);
+				r->top = FLOATSWAP32(r->top);
+			}
+#endif
 		}
 		
 		CFileMgr::CloseFile(hFile);
@@ -334,7 +347,7 @@ SectorRadius(float fSize)
 void
 CWaterLevel::RenderWater()
 {
-//"Custom" Don´t Render Water Toggle
+//"Custom" Donï¿½t Render Water Toggle
 #ifndef MASTER
 	if (gbDontRenderWater)
 		return;

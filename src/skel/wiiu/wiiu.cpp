@@ -10,6 +10,8 @@
 
 #include <vpad/input.h>
 
+#include <coreinit/time.h>
+
 #include <stdio.h>
 #include "rwcore.h"
 #include "skeleton.h"
@@ -141,9 +143,7 @@ psGrabScreen(RwCamera *pCamera)
 double
 psTimer(void)
 {
-	struct timespec start; 
-	clock_gettime(CLOCK_MONOTONIC, &start);
-	return start.tv_sec * 1000.0 + start.tv_nsec/1000000.0;
+	return OSTicksToMilliseconds(OSGetSystemTime());
 } 
 
 
@@ -834,6 +834,37 @@ _InputTranslateShiftKeyUpDown(RsKeyCodes *rs) {
 	RsKeyboardEventHandler(rshiftStatus ? rsKEYDOWN : rsKEYUP, &(*rs = rsRSHIFT));
 }
 
+#include <coreinit/memory.h>
+#include <coreinit/memheap.h>
+#include <coreinit/memexpheap.h>
+#include <coreinit/memdefaultheap.h>
+
+void memInfo()
+{
+	for(int32_t i = 0; i<2; i++) {
+		MEMHeapHandle defaultHeap = MEMGetBaseHeapHandle((MEMBaseHeapType) i);
+		if(defaultHeap != 0) {
+			uint32_t start = 0;
+			uint32_t size_bytes = 0;
+			OSGetMemBound((OSMemoryType) (i+1),&start,&size_bytes);
+			WHBLogPrintf("Memory Bound MEM%d: startAddress 0x%08X size 0x%08X\n",i+1,start,size_bytes);
+
+			int32_t size = MEMGetAllocatableSizeForExpHeapEx(defaultHeap, 4);
+			int32_t totalSize = MEMGetTotalFreeSizeForExpHeap(defaultHeap);
+			WHBLogPrintf("BaseHandle address 0x%08X: MEM%d with %07d kb memory free in one block, %07d kb in total.\n",defaultHeap,i+1,size/1024,totalSize/1024);
+
+			MEMHeapHandle parent = MEMFindParentHeap(defaultHeap);
+			if(parent != 0) {
+				size = MEMGetAllocatableSizeForExpHeapEx(parent, 4);
+				int32_t totalSize = MEMGetTotalFreeSizeForExpHeap(parent);
+				WHBLogPrintf("It's parent heap is 0x%08X: With %07d kb memory free in one block, %07d kb in total.\n",parent,size/1024,totalSize/1024);
+			} else {
+				WHBLogPrintf("No parent found =(\n");
+			}
+		}
+	}
+}
+
 /*
  *****************************************************************************
  */
@@ -850,6 +881,8 @@ main(int argc, char *argv[])
 	WHBLogUdpInit();
 
 	WHBLogPrintf("RE3 Wii U started");
+
+	memInfo();
 
 	// Set out working dir to the path where the assets are
 	chdir("/vol/external01/wiiu/apps/re3");

@@ -88,6 +88,10 @@ inline float _floatswap32(float f)
 #define BSWAP32(x) __builtin_bswap32(x)
 #define BSWAP16(x) __builtin_bswap16(x)
 #define FLOATSWAP32(x) _floatswap32(x)
+#else
+#define BSWAP32(x) (x)
+#define BSWAP16(x) (x)
+#define FLOATSWAP32(x) (x)
 #endif
 
 #ifndef nil

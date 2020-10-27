@@ -139,7 +139,13 @@ char* casepath(char const* path, bool checkPathFirst)
     }
 
     size_t l = strlen(path);
+#ifdef __WIIU__
+    // alloca seems to cause issues here, so just use the stack
+    char _p[l+1];
+    char* p = _p;
+#else
     char* p = (char*)alloca(l + 1);
+#endif
     char* out = (char*)malloc(l + 3); // for extra ./
     strcpy(p, path);
 
@@ -174,7 +180,6 @@ char* casepath(char const* path, bool checkPathFirst)
     char* c;
     while (c = strsep(&p, "/\\"))
     {
-        debug("sep string from %s is %s", p, c);
         // May be trailing slash(allow), slash at the start(avoid), or multiple slashes(avoid)
         if (*c == '\0')
         {

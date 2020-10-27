@@ -792,10 +792,17 @@ CAnimManager::LoadAnimFile(int fd, bool compress)
 	float *fbuf = (float*)buf;
 
 	CFileMgr::Read(fd, (char*)&anpk, sizeof(IfpHeader));
+#ifdef BIGENDIAN
+	anpk.size = BSWAP32(anpk.size);
+#endif
 	if(strncmp(anpk.ident, "ANLF", 4) == 0){
 		ROUNDSIZE(anpk.size);
 		CFileMgr::Read(fd, buf, anpk.size);
+#ifndef BIGENDIAN
 		numANPK = *(int*)buf;
+#else
+		numANPK = BSWAP32(*(int*)buf);
+#endif
 	}else if(strncmp(anpk.ident, "ANPK", 4) == 0){
 		CFileMgr::Seek(fd, -8, 1);
 		numANPK = 1;
@@ -804,13 +811,23 @@ CAnimManager::LoadAnimFile(int fd, bool compress)
 	for(i = 0; i < numANPK; i++){
 		// block name
 		CFileMgr::Read(fd, (char*)&anpk, sizeof(IfpHeader));
+#ifdef BIGENDIAN
+		anpk.size = BSWAP32(anpk.size);
+#endif
 		ROUNDSIZE(anpk.size);
 		CFileMgr::Read(fd, (char*)&info, sizeof(IfpHeader));
+#ifdef BIGENDIAN
+		info.size = BSWAP32(info.size);
+#endif
 		ROUNDSIZE(info.size);
 		CFileMgr::Read(fd, buf, info.size);
 		CAnimBlock *animBlock = &ms_aAnimBlocks[ms_numAnimBlocks++];
 		strncpy(animBlock->name, buf+4, 24);
+#ifndef BIGENDIAN
 		animBlock->numAnims = *(int*)buf;
+#else
+		animBlock->numAnims = BSWAP32(*(int*)buf);
+#endif
 
 		animBlock->firstIndex = ms_numAnimations;
 
@@ -819,53 +836,92 @@ CAnimManager::LoadAnimFile(int fd, bool compress)
 
 			// animation name
 			CFileMgr::Read(fd, (char*)&name, sizeof(IfpHeader));
+#ifdef BIGENDIAN
+			name.size = BSWAP32(name.size);
+#endif
 			ROUNDSIZE(name.size);
 			CFileMgr::Read(fd, buf, name.size);
 			hier->SetName(buf);
 
 			// DG info has number of nodes/sequences
 			CFileMgr::Read(fd, (char*)&dgan, sizeof(IfpHeader));
+#ifdef BIGENDIAN
+			dgan.size = BSWAP32(dgan.size);
+#endif
 			ROUNDSIZE(dgan.size);
 			CFileMgr::Read(fd, (char*)&info, sizeof(IfpHeader));
+#ifdef BIGENDIAN
+			info.size = BSWAP32(info.size);
+#endif
 			ROUNDSIZE(info.size);
 			CFileMgr::Read(fd, buf, info.size);
+#ifndef BIGENDIAN
 			hier->numSequences = *(int*)buf;
+#else
+			hier->numSequences = BSWAP32(*(int*)buf);
+#endif
 			hier->sequences = new CAnimBlendSequence[hier->numSequences];
 
 			CAnimBlendSequence *seq = hier->sequences;
 			for(k = 0; k < hier->numSequences; k++, seq++){
 				// Each node has a name and key frames
 				CFileMgr::Read(fd, (char*)&cpan, sizeof(IfpHeader));
+#ifdef BIGENDIAN
+				cpan.size = BSWAP32(cpan.size);
+#endif
 				ROUNDSIZE(dgan.size);
 				CFileMgr::Read(fd, (char*)&anim, sizeof(IfpHeader));
+#ifdef BIGENDIAN
+				anim.size = BSWAP32(anim.size);
+#endif
 				ROUNDSIZE(anim.size);
 				CFileMgr::Read(fd, buf, anim.size);
+#ifndef BIGENDIAN
 				int numFrames = *(int*)(buf+28);
+#else
+				int numFrames = BSWAP32(*(int*)(buf+28));
+#endif
 #ifdef PED_SKIN
 				if(anim.size == 44)
+#ifndef BIGENDIAN
 					seq->SetBoneTag(*(int*)(buf+40));
+#else
+					seq->SetBoneTag(BSWAP32(*(int*)(buf+40)));
+#endif
 #endif
 				seq->SetName(buf);
 				if(numFrames == 0)
 					continue;
 
 				CFileMgr::Read(fd, (char*)&info, sizeof(info));
+#ifdef BIGENDIAN
+				info.size = BSWAP32(info.size);
+#endif
 				if(strncmp(info.ident, "KR00", 4) == 0){
 					seq->SetNumFrames(numFrames, false);
 					KeyFrame *kf = seq->GetKeyFrame(0);
 					for(l = 0; l < numFrames; l++, kf++){
 						CFileMgr::Read(fd, buf, 0x14);
+#ifndef BIGENDIAN
 						kf->rotation.x = -fbuf[0];
 						kf->rotation.y = -fbuf[1];
 						kf->rotation.z = -fbuf[2];
 						kf->rotation.w = fbuf[3];
 						kf->deltaTime = fbuf[4];	// absolute time here
+#else
+						kf->rotation.x = -FLOATSWAP32(fbuf[0]);
+						kf->rotation.y = -FLOATSWAP32(fbuf[1]);
+						kf->rotation.z = -FLOATSWAP32(fbuf[2]);
+						kf->rotation.w = FLOATSWAP32(fbuf[3]);
+						kf->deltaTime = FLOATSWAP32(fbuf[4]);	// absolute time here
+#endif
 					}
 				}else if(strncmp(info.ident, "KRT0", 4) == 0){
 					seq->SetNumFrames(numFrames, true);
 					KeyFrameTrans *kf = (KeyFrameTrans*)seq->GetKeyFrame(0);
 					for(l = 0; l < numFrames; l++, kf++){
 						CFileMgr::Read(fd, buf, 0x20);
+#ifndef BIGENDIAN
 						kf->rotation.x = -fbuf[0];
 						kf->rotation.y = -fbuf[1];
 						kf->rotation.z = -fbuf[2];
@@ -874,12 +930,23 @@ CAnimManager::LoadAnimFile(int fd, bool compress)
 						kf->translation.y = fbuf[5];
 						kf->translation.z = fbuf[6];
 						kf->deltaTime = fbuf[7];	// absolute time here
+#else
+						kf->rotation.x = -FLOATSWAP32(fbuf[0]);
+						kf->rotation.y = -FLOATSWAP32(fbuf[1]);
+						kf->rotation.z = -FLOATSWAP32(fbuf[2]);
+						kf->rotation.w = FLOATSWAP32(fbuf[3]);
+						kf->translation.x = FLOATSWAP32(fbuf[4]);
+						kf->translation.y = FLOATSWAP32(fbuf[5]);
+						kf->translation.z = FLOATSWAP32(fbuf[6]);
+						kf->deltaTime = FLOATSWAP32(fbuf[7]);	// absolute time here
+#endif
 					}
 				}else if(strncmp(info.ident, "KRTS", 4) == 0){
 					seq->SetNumFrames(numFrames, true);
 					KeyFrameTrans *kf = (KeyFrameTrans*)seq->GetKeyFrame(0);
 					for(l = 0; l < numFrames; l++, kf++){
 						CFileMgr::Read(fd, buf, 0x2C);
+#ifndef BIGENDIAN
 						kf->rotation.x = -fbuf[0];
 						kf->rotation.y = -fbuf[1];
 						kf->rotation.z = -fbuf[2];
@@ -889,6 +956,17 @@ CAnimManager::LoadAnimFile(int fd, bool compress)
 						kf->translation.z = fbuf[6];
 						// scaling ignored
 						kf->deltaTime = fbuf[10];	// absolute time here
+#else
+						kf->rotation.x = -FLOATSWAP32(fbuf[0]);
+						kf->rotation.y = -FLOATSWAP32(fbuf[1]);
+						kf->rotation.z = -FLOATSWAP32(fbuf[2]);
+						kf->rotation.w = FLOATSWAP32(fbuf[3]);
+						kf->translation.x = FLOATSWAP32(fbuf[4]);
+						kf->translation.y = FLOATSWAP32(fbuf[5]);
+						kf->translation.z = FLOATSWAP32(fbuf[6]);
+						// scaling ignored
+						kf->deltaTime = FLOATSWAP32(fbuf[10]);	// absolute time here
+#endif
 					}
 				}
 

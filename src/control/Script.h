@@ -309,12 +309,20 @@ public:
 	static int32 Read4BytesFromScript(uint32* pIp) {
 		int32 retval = ScriptSpace[*pIp + 3] << 24 | ScriptSpace[*pIp + 2] << 16 | ScriptSpace[*pIp + 1] << 8 | ScriptSpace[*pIp];
 		*pIp += 4;
+#ifndef BIGENDIANa
 		return retval;
+#else
+		return BSWAP32(retval);
+#endif
 	}
 	static int16 Read2BytesFromScript(uint32* pIp) {
 		int16 retval = ScriptSpace[*pIp + 1] << 8 | ScriptSpace[*pIp];
 		*pIp += 2;
+#ifndef BIGENDIANa
 		return retval;
+#else
+		return BSWAP32(retval);
+#endif
 	}
 	static int8 Read1ByteFromScript(uint32* pIp) {
 		int8 retval = ScriptSpace[*pIp];

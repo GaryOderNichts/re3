@@ -107,7 +107,11 @@ void COnscreenTimerEntry::Process() {
 	}
 
 	int32* timerPtr = CTheScripts::GetPointerToScriptVariable(m_nTimerOffset);
+#ifndef BIGENDIAN
 	int32 oldTime = *timerPtr;
+#else
+	int32 oldTime = BSWAP32(*timerPtr);
+#endif
 	int32 newTime = oldTime - int32(CTimer::GetTimeStepInSeconds() * 1000);
 	if(newTime < 0) {
 		*timerPtr = 0;
@@ -115,7 +119,11 @@ void COnscreenTimerEntry::Process() {
 		m_nTimerOffset = 0;
 		m_aTimerText[0] = 0;
 	} else {
+#ifndef BIGENDIAN
 		*timerPtr = newTime;
+#else
+		*timerPtr = BSWAP32(newTime);
+#endif
 		int32 oldTimeSeconds = oldTime / 1000;
 		if(oldTimeSeconds < 12 && newTime / 1000 != oldTimeSeconds) {
 			DMAudio.PlayFrontEndSound(SOUND_CLOCK_TICK, newTime / 1000);
@@ -144,12 +152,20 @@ bool COnscreenTimerEntry::ProcessForDisplay() {
 }
 
 void COnscreenTimerEntry::ProcessForDisplayClock() {
+#ifndef BIGENDIAN
 	uint32 time = *CTheScripts::GetPointerToScriptVariable(m_nTimerOffset);
+#else
+	uint32 time = BSWAP32(*CTheScripts::GetPointerToScriptVariable(m_nTimerOffset));
+#endif
 	sprintf(m_bTimerBuffer, "%02d:%02d", time / 1000 / 60,
 				   time / 1000 % 60);
 }
 
 void COnscreenTimerEntry::ProcessForDisplayCounter() {
+#ifndef BIGENDIAN
 	uint32 counter = *CTheScripts::GetPointerToScriptVariable(m_nCounterOffset);
+#else
+	uint32 counter = BSWAP32(*CTheScripts::GetPointerToScriptVariable(m_nCounterOffset));
+#endif
 	sprintf(m_bCounterBuffer, "%d", counter);
 }

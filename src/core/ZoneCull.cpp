@@ -88,6 +88,48 @@ CCullZones::ResolveVisibilities(void)
 		CFileMgr::Read(fd, (char*)aPointersToBigBuildingsForBuildings, sizeof(aPointersToBigBuildingsForBuildings));
 		CFileMgr::Read(fd, (char*)aPointersToBigBuildingsForTreadables, sizeof(aPointersToBigBuildingsForTreadables));
 		CFileMgr::CloseFile(fd);
+#ifdef BIGENDIAN
+		NumCullZones = BSWAP32(NumCullZones);
+		for (int i = 0; i < NUMCULLZONES; i++)
+		{
+			CCullZone* z = &aZones[i];
+			z->position.x = FLOATSWAP32(z->position.x);
+			z->position.y = FLOATSWAP32(z->position.y);
+			z->position.z = FLOATSWAP32(z->position.z);
+			z->minx = FLOATSWAP32(z->minx);
+			z->maxx = FLOATSWAP32(z->maxx);
+			z->miny = FLOATSWAP32(z->miny);
+			z->maxy = FLOATSWAP32(z->maxy);
+			z->minz = FLOATSWAP32(z->minz);
+			z->maxz = FLOATSWAP32(z->maxz);
+			z->m_indexStart = BSWAP32(z->m_indexStart);
+			z->m_groupIndexCount[0] = BSWAP16(z->m_groupIndexCount[0]);
+			z->m_groupIndexCount[1] = BSWAP16(z->m_groupIndexCount[1]);
+			z->m_groupIndexCount[2] = BSWAP16(z->m_groupIndexCount[2]);
+			z->m_numBuildings = BSWAP16(z->m_numBuildings);
+			z->m_numTreadablesPlus10m = BSWAP16(z->m_numTreadablesPlus10m);
+			z->m_numTreadables = BSWAP16(z->m_numTreadables);
+		}
+		NumAttributeZones = BSWAP32(NumAttributeZones);
+		for (int i = 0; i < NUMATTRIBZONES; i++)
+		{
+			CAttributeZone* a = &aAttributeZones[i];
+			a->minx = FLOATSWAP32(a->minx);
+			a->maxx = FLOATSWAP32(a->maxx);
+			a->miny = FLOATSWAP32(a->miny);
+			a->maxy = FLOATSWAP32(a->maxy);
+			a->minz = FLOATSWAP32(a->minz);
+			a->maxz = FLOATSWAP32(a->maxz);
+			a->attributes = BSWAP16(a->attributes);
+			a->wantedLevel = BSWAP16(a->wantedLevel);
+		}
+		for (int i = 0; i < NUMZONEINDICES; i++)
+			aIndices[i] = BSWAP16(aIndices[i]);
+		for (int i = 0; i < NUMBUILDINGS; i++)
+			aPointersToBigBuildingsForBuildings[i] = BSWAP16(aPointersToBigBuildingsForBuildings[i]);
+		for (int i = 0; i < NUMTREADABLES; i++)
+			aPointersToBigBuildingsForTreadables[i] = BSWAP16(aPointersToBigBuildingsForTreadables[i]);
+#endif
 	}else{
 #if 0
 		// TODO: implement code from mobile to generate data here

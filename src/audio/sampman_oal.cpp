@@ -1049,6 +1049,11 @@ cSampleManager::InitialiseChannel(uint32 nChannel, uint32 nSfx, uint8 nBank)
 		
 		uintptr addr = nSampleBankMemoryStartAddress[nBank] + m_aSamples[nSfx].nOffset - m_aSamples[BankStartOffset[nBank]].nOffset;
 	
+#ifdef BIGENDIAN
+		for (int i = 0; i < m_aSamples[nSfx].nSize / sizeof(uint16); i++)
+			((uint16*)addr)[i] = BSWAP16(((uint16*)addr)[i]);
+#endif
+
 		if ( ALBuffers[nSfx].IsEmpty() )
 		{
 			ALuint buf;
