@@ -113,7 +113,9 @@ inline CVector MultiplyInverse(const CMatrix &mat, const CVector &vec)
 
 class CCompressedMatrixNotAligned
 {
+#ifndef BIGENDIAN
 	CVector m_vecPos;
+#endif
 	int8 m_rightX;
 	int8 m_rightY;
 	int8 m_rightZ;
@@ -121,6 +123,10 @@ class CCompressedMatrixNotAligned
 	int8 m_upY;
 	int8 m_upZ;
 public:
+#ifdef BIGENDIAN
+	// needs to be public for bswapping
+	CVector m_vecPos;
+#endif
 	void CompressFromFullMatrix(CMatrix &other);
 	void DecompressIntoFullMatrix(CMatrix &other);
 };

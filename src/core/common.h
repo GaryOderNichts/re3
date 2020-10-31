@@ -88,6 +88,23 @@ inline float _floatswap32(float f)
 #define BSWAP32(x) __builtin_bswap32(x)
 #define BSWAP16(x) __builtin_bswap16(x)
 #define FLOATSWAP32(x) _floatswap32(x)
+#define BSWAP_VECTOR(v) \
+	do { \
+	v.x = FLOATSWAP32(v.x); \
+	v.y = FLOATSWAP32(v.y); \
+	v.z = FLOATSWAP32(v.z); \
+	} while(0)
+#define BSWAP_MTX(m) \
+	do { \
+	BSWAP_VECTOR(m.right); \
+	BSWAP_VECTOR(m.up); \
+	BSWAP_VECTOR(m.at); \
+	BSWAP_VECTOR(m.pos); \
+	BSWAP32(m.flags); \
+	BSWAP32(m.pad1); \
+	BSWAP32(m.pad2); \
+	BSWAP32(m.pad3); \
+	} while(0)
 #else
 #define BSWAP32(x) (x)
 #define BSWAP16(x) (x)
