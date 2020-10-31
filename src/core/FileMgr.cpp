@@ -10,6 +10,12 @@
 
 const char *_psGetUserFilesFolder();
 
+// io is really slow on the Wii U
+// so we're buffering files
+#ifdef __WIIU__
+#define BUFFER
+#endif
+
 /*
  * Windows FILE is BROKEN for GTA.
  *
@@ -22,6 +28,9 @@ struct myFILE
 {
 	bool isText;
 	FILE *file;
+#ifdef BUFFER
+	char* buf;
+#endif
 };
 
 #define NUMFILES 20
@@ -80,6 +89,10 @@ found:
 	myfiles[fd].file = fcaseopen(filename, realmode);
 	if(myfiles[fd].file == nil)
 		return 0;
+#ifdef BUFFER
+	myfiles[fd].buf = (char*) malloc(BUFSIZ);
+	setbuf(myfiles[fd].file, myfiles[fd].buf);
+#endif
 	return fd;
 }
 
@@ -91,6 +104,9 @@ myfclose(int fd)
 	if(myfiles[fd].file){
 		ret = fclose(myfiles[fd].file);
 		myfiles[fd].file = nil;
+#ifdef BUFFER
+		free(myfiles[fd].buf);
+#endif
 		return ret;
 	}
 	return EOF;
