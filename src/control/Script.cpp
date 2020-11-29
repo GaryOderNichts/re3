@@ -2265,14 +2265,14 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-		*ptr = BSWAP32(ScriptParams[0]);
+		*ptr = ScriptParams[0];
 		return 0;
 	}
 	case COMMAND_SET_LVAR_FLOAT:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-		*(float*)ptr = FLOATSWAP32(*(float*)&ScriptParams[0]);
+		*(float*)ptr = *(float*)&ScriptParams[0];
 		return 0;
 	}
 	case COMMAND_ADD_VAL_TO_INT_VAR:
@@ -2301,22 +2301,14 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-#ifndef BIGENDIAN
 		*ptr += ScriptParams[0];
-#else
-		*ptr = BSWAP32(BSWAP32(*ptr) + ScriptParams[0]);
-#endif
 		return 0;
 	}
 	case COMMAND_ADD_VAL_TO_FLOAT_LVAR:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-#ifndef BIGENDIAN
 		*(float*)ptr += *(float*)&ScriptParams[0];
-#else
-		*(float*)ptr = FLOATSWAP32(FLOATSWAP32(*(float*)ptr ) + *(float*)&ScriptParams[0]);
-#endif
 		return 0;
 	}
 	case COMMAND_SUB_VAL_FROM_INT_VAR:
@@ -2345,22 +2337,14 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-#ifndef BIGENDIAN
 		*ptr -= ScriptParams[0];
-#else
-		*ptr = BSWAP32(BSWAP32(*ptr) - ScriptParams[0]);
-#endif
 		return 0;
 	}
 	case COMMAND_SUB_VAL_FROM_FLOAT_LVAR:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-#ifndef BIGENDIAN
 		*(float*)ptr -= *(float*)&ScriptParams[0];
-#else
-		*(float*)ptr = FLOATSWAP32(FLOATSWAP32(*(float*)ptr ) - *(float*)&ScriptParams[0]);
-#endif
 		return 0;
 	}
 	case COMMAND_MULT_INT_VAR_BY_VAL:
@@ -2389,22 +2373,14 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-#ifndef BIGENDIAN
 		*ptr *= ScriptParams[0];
-#else
-		*ptr = BSWAP32(BSWAP32(*ptr) * ScriptParams[0]);
-#endif
 		return 0;
 	}
 	case COMMAND_MULT_FLOAT_LVAR_BY_VAL:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-#ifndef BIGENDIAN
 		*(float*)ptr *= *(float*)&ScriptParams[0];
-#else
-		*(float*)ptr = FLOATSWAP32(FLOATSWAP32(*(float*)ptr ) * *(float*)&ScriptParams[0]);
-#endif
 		return 0;
 	}
 	case COMMAND_DIV_INT_VAR_BY_VAL:
@@ -2433,22 +2409,14 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-#ifndef BIGENDIAN
 		*ptr /= ScriptParams[0];
-#else
-		*ptr = BSWAP32(BSWAP32(*ptr) / ScriptParams[0]);
-#endif
 		return 0;
 	}
 	case COMMAND_DIV_FLOAT_LVAR_BY_VAL:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-#ifndef BIGENDIAN
 		*(float*)ptr /= *(float*)&ScriptParams[0];
-#else
-		*(float*)ptr = FLOATSWAP32(FLOATSWAP32(*(float*)ptr ) / *(float*)&ScriptParams[0]);
-#endif
 		return 0;
 	}
 	case COMMAND_IS_INT_VAR_GREATER_THAN_NUMBER:
@@ -2462,7 +2430,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-		UpdateCompareFlag(BSWAP32(*ptr) > ScriptParams[0]);
+		UpdateCompareFlag(*ptr > ScriptParams[0]);
 		return 0;
 	}
 	case COMMAND_IS_NUMBER_GREATER_THAN_INT_VAR:
@@ -2476,7 +2444,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		CollectParameters(&m_nIp, 1);
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(ScriptParams[0] > BSWAP32(*ptr));
+		UpdateCompareFlag(ScriptParams[0] > *ptr);
 		return 0;
 	}
 	case COMMAND_IS_INT_VAR_GREATER_THAN_INT_VAR:
@@ -2490,21 +2458,21 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-		UpdateCompareFlag(BSWAP32(*ptr1) > BSWAP32(*ptr2));
+		UpdateCompareFlag(*ptr1 > BSWAP32(*ptr2));
 		return 0;
 	}
 	case COMMAND_IS_INT_VAR_GREATER_THAN_INT_LVAR:
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(BSWAP32(*ptr1) > BSWAP32(*ptr2));
+		UpdateCompareFlag(BSWAP32(*ptr1) > *ptr2);
 		return 0;
 	}
 	case COMMAND_IS_INT_LVAR_GREATER_THAN_INT_LVAR:
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(BSWAP32(*ptr1) > BSWAP32(*ptr2));
+		UpdateCompareFlag(*ptr1 > *ptr2);
 		return 0;
 	}
 	case COMMAND_IS_FLOAT_VAR_GREATER_THAN_NUMBER:
@@ -2518,7 +2486,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr) > *(float*)&ScriptParams[0]);
+		UpdateCompareFlag(*(float*)ptr > *(float*)&ScriptParams[0]);
 		return 0;
 	}
 	case COMMAND_IS_NUMBER_GREATER_THAN_FLOAT_VAR:
@@ -2532,7 +2500,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		CollectParameters(&m_nIp, 1);
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(*(float*)&ScriptParams[0] > FLOATSWAP32(*(float*)ptr));
+		UpdateCompareFlag(*(float*)&ScriptParams[0] > *(float*)ptr);
 		return 0;
 	}
 	case COMMAND_IS_FLOAT_VAR_GREATER_THAN_FLOAT_VAR:
@@ -2546,21 +2514,21 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) > FLOATSWAP32(*(float*)ptr2));
+		UpdateCompareFlag(*(float*)ptr1 > FLOATSWAP32(*(float*)ptr2));
 		return 0;
 	}
 	case COMMAND_IS_FLOAT_VAR_GREATER_THAN_FLOAT_LVAR:
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) > FLOATSWAP32(*(float*)ptr2));
+		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) > *(float*)ptr2);
 		return 0;
 	}
 	case COMMAND_IS_FLOAT_LVAR_GREATER_THAN_FLOAT_LVAR:
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) > FLOATSWAP32(*(float*)ptr2));
+		UpdateCompareFlag(*(float*)ptr1 > *(float*)ptr2);
 		return 0;
 	}
 	case COMMAND_IS_INT_VAR_GREATER_OR_EQUAL_TO_NUMBER:
@@ -2574,7 +2542,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-		UpdateCompareFlag(BSWAP32(*ptr) >= ScriptParams[0]);
+		UpdateCompareFlag(*ptr >= ScriptParams[0]);
 		return 0;
 	}
 	case COMMAND_IS_NUMBER_GREATER_OR_EQUAL_TO_INT_VAR:
@@ -2588,7 +2556,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		CollectParameters(&m_nIp, 1);
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(ScriptParams[0] >= BSWAP32(*ptr));
+		UpdateCompareFlag(ScriptParams[0] >= *ptr);
 		return 0;
 	}
 	case COMMAND_IS_INT_VAR_GREATER_OR_EQUAL_TO_INT_VAR:
@@ -2602,21 +2570,21 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-		UpdateCompareFlag(BSWAP32(*ptr1) >= BSWAP32(*ptr2));
+		UpdateCompareFlag(*ptr1 >= BSWAP32(*ptr2));
 		return 0;
 	}
 	case COMMAND_IS_INT_VAR_GREATER_OR_EQUAL_TO_INT_LVAR:
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(BSWAP32(*ptr1) >= BSWAP32(*ptr2));
+		UpdateCompareFlag(BSWAP32(*ptr1) >= *ptr2);
 		return 0;
 	}
 	case COMMAND_IS_INT_LVAR_GREATER_OR_EQUAL_TO_INT_LVAR:
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(BSWAP32(*ptr1) >= BSWAP32(*ptr2));
+		UpdateCompareFlag(*ptr1 >= *ptr2);
 		return 0;
 	}
 	case COMMAND_IS_FLOAT_VAR_GREATER_OR_EQUAL_TO_NUMBER:
@@ -2630,7 +2598,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr) >= *(float*)&ScriptParams[0]);
+		UpdateCompareFlag(*(float*)ptr >= *(float*)&ScriptParams[0]);
 		return 0;
 	}
 	case COMMAND_IS_NUMBER_GREATER_OR_EQUAL_TO_FLOAT_VAR:
@@ -2644,7 +2612,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		CollectParameters(&m_nIp, 1);
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(*(float*)&ScriptParams[0] >= FLOATSWAP32(*(float*)ptr));
+		UpdateCompareFlag(*(float*)&ScriptParams[0] >= *(float*)ptr);
 		return 0;
 	}
 	case COMMAND_IS_FLOAT_VAR_GREATER_OR_EQUAL_TO_FLOAT_VAR:
@@ -2658,21 +2626,21 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) >= FLOATSWAP32(*(float*)ptr2));
+		UpdateCompareFlag(*(float*)ptr1 >= FLOATSWAP32(*(float*)ptr2));
 		return 0;
 	}
 	case COMMAND_IS_FLOAT_VAR_GREATER_OR_EQUAL_TO_FLOAT_LVAR:
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) >= FLOATSWAP32(*(float*)ptr2));
+		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) >= *(float*)ptr2);
 		return 0;
 	}
 	case COMMAND_IS_FLOAT_LVAR_GREATER_OR_EQUAL_TO_FLOAT_LVAR:
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) >= FLOATSWAP32(*(float*)ptr2));
+		UpdateCompareFlag(*(float*)ptr1 >= *(float*)ptr2);
 		return 0;
 	}
 	case COMMAND_IS_INT_VAR_EQUAL_TO_NUMBER:
@@ -2686,7 +2654,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-		UpdateCompareFlag(BSWAP32(*ptr) == ScriptParams[0]);
+		UpdateCompareFlag(*ptr == ScriptParams[0]);
 		return 0;
 	}
 	case COMMAND_IS_INT_VAR_EQUAL_TO_INT_VAR:
@@ -2700,14 +2668,14 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(BSWAP32(*ptr1) == BSWAP32(*ptr2));
+		UpdateCompareFlag(BSWAP32(*ptr1) == *ptr2);
 		return 0;
 	}
 	case COMMAND_IS_INT_LVAR_EQUAL_TO_INT_LVAR:
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(BSWAP32(*ptr1) == BSWAP32(*ptr2));
+		UpdateCompareFlag(*ptr1 == *ptr2);
 		return 0;
 	}
 	/* Following commands are not implemented, and go to default case
@@ -2728,7 +2696,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr) == *(float*)&ScriptParams[0]);
+		UpdateCompareFlag(*(float*)ptr == *(float*)&ScriptParams[0]);
 		return 0;
 	}
 	case COMMAND_IS_FLOAT_VAR_EQUAL_TO_FLOAT_VAR:
@@ -2742,14 +2710,14 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) == FLOATSWAP32(*(float*)ptr2));
+		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) == *(float*)ptr2);
 		return 0;
 	}
 	case COMMAND_IS_FLOAT_LVAR_EQUAL_TO_FLOAT_LVAR:
 	{
 		int32* ptr1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		int32* ptr2 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		UpdateCompareFlag(FLOATSWAP32(*(float*)ptr1) == FLOATSWAP32(*(float*)ptr2));
+		UpdateCompareFlag(*(float*)ptr1 == *(float*)ptr2);
 		return 0;
 	}
 	/* Following commands are not implemented, and go to default case
@@ -2951,24 +2919,16 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 #ifndef BIGENDIAN
 		*nScriptVar1 += *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 #else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) + BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
+		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) + *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL));
 #endif
 		return 0;
 	case COMMAND_ADD_INT_VAR_TO_INT_LVAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
-		*nScriptVar1 += *GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-#else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) + BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
-#endif
+		*nScriptVar1 += BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	case COMMAND_ADD_INT_LVAR_TO_INT_LVAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
 		*nScriptVar1 += *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) + BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
-#endif
 		return 0;
 	case COMMAND_ADD_FLOAT_VAR_TO_FLOAT_VAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
@@ -2983,24 +2943,16 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 #ifndef BIGENDIAN
 		*fScriptVar1 += *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 #else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) + FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
+		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) + *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL));
 #endif
 		return 0;
 	case COMMAND_ADD_FLOAT_VAR_TO_FLOAT_LVAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
-		*fScriptVar1 += *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) + FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
-#endif
+		*fScriptVar1 += FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	case COMMAND_ADD_FLOAT_LVAR_TO_FLOAT_LVAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
 		*fScriptVar1 += *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) + FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
-#endif
 		return 0;
 	case COMMAND_SUB_INT_VAR_FROM_INT_VAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
@@ -3012,11 +2964,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 		return 0;
 	case COMMAND_SUB_INT_LVAR_FROM_INT_LVAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
 		*nScriptVar1 -= *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) - BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
-#endif
 		return 0;
 	case COMMAND_SUB_FLOAT_VAR_FROM_FLOAT_VAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
@@ -3028,11 +2976,7 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 		return 0;
 	case COMMAND_SUB_FLOAT_LVAR_FROM_FLOAT_LVAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
 		*fScriptVar1 -= *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) - FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
-#endif
 		return 0;
 	default:
 		script_assert(0);
@@ -3051,32 +2995,24 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 #ifndef BIGENDIAN
 		*nScriptVar1 -= *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 #else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) - BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
+		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) - *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL));
 #endif
 		return 0;
 	case COMMAND_SUB_INT_VAR_FROM_INT_LVAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
-		*nScriptVar1 -= *GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-#else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) - BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
-#endif
+		*nScriptVar1 -= BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	case COMMAND_SUB_FLOAT_LVAR_FROM_FLOAT_VAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 #ifndef BIGENDIAN
 		*fScriptVar1 -= *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 #else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) - FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
+		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) - *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL));
 #endif
 		return 0;
 	case COMMAND_SUB_FLOAT_VAR_FROM_FLOAT_LVAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
-		*fScriptVar1 -= *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) - FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
-#endif
+		*fScriptVar1 -= FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	case COMMAND_MULT_INT_VAR_BY_INT_VAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
@@ -3091,24 +3027,16 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 #ifndef BIGENDIAN
 		*nScriptVar1 *= *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 #else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) * BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
+		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) * *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL));
 #endif
 		return 0;
 	case COMMAND_MULT_INT_LVAR_BY_INT_VAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
-		*nScriptVar1 *= *GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-#else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) * BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
-#endif
+		*nScriptVar1 *= BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	case COMMAND_MULT_INT_LVAR_BY_INT_LVAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
 		*nScriptVar1 *= *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) * BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
-#endif
 		return 0;
 	case COMMAND_MULT_FLOAT_VAR_BY_FLOAT_VAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
@@ -3123,24 +3051,16 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 #ifndef BIGENDIAN
 		*fScriptVar1 *= *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 #else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) * FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
+		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL));
 #endif
 		return 0;
 	case COMMAND_MULT_FLOAT_LVAR_BY_FLOAT_VAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
-		*fScriptVar1 *= *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) * FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
-#endif
+		*fScriptVar1 *= FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	case COMMAND_MULT_FLOAT_LVAR_BY_FLOAT_LVAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
 		*fScriptVar1 *= *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) * FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
-#endif
 		return 0;
 	case COMMAND_DIV_INT_VAR_BY_INT_VAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
@@ -3155,24 +3075,16 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 #ifndef BIGENDIAN
 		*nScriptVar1 /= *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 #else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) / BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
+		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) / *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL));
 #endif
 		return 0;
 	case COMMAND_DIV_INT_LVAR_BY_INT_VAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
-		*nScriptVar1 /= *GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-#else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) / BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
-#endif
+		*nScriptVar1 /= BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	case COMMAND_DIV_INT_LVAR_BY_INT_LVAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
 		*nScriptVar1 /= *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#else
-		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) / BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
-#endif
 		return 0;
 	case COMMAND_DIV_FLOAT_VAR_BY_FLOAT_VAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
@@ -3187,24 +3099,16 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 #ifndef BIGENDIAN
 		*fScriptVar1 /= *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 #else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) / FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
+		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) / *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL));
 #endif
 		return 0;
 	case COMMAND_DIV_FLOAT_LVAR_BY_FLOAT_VAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
-		*fScriptVar1 /= *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) / FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
-#endif
+		*fScriptVar1 /= FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	case COMMAND_DIV_FLOAT_LVAR_BY_FLOAT_LVAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
 		*fScriptVar1 /= *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) / FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
-#endif
 		return 0;
 	case COMMAND_ADD_TIMED_VAL_TO_FLOAT_VAR:
 	{
@@ -3221,11 +3125,7 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-#ifndef BIGENDIAN
 		*(float*)ptr += CTimer::GetTimeStep() * *(float*)&ScriptParams[0];
-#else
-		*(float*)ptr = FLOATSWAP32(FLOATSWAP32(*(float*)ptr) + (CTimer::GetTimeStep() * *(float*)&ScriptParams[0]));
-#endif
 		return 0;
 	}
 	case COMMAND_ADD_TIMED_FLOAT_VAR_TO_FLOAT_VAR:
@@ -3233,7 +3133,7 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 #ifndef BIGENDIAN
 		*fScriptVar1 += CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 #else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) + (CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
+		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) + (CTimer::GetTimeStep() * FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL))));
 #endif
 		return 0;
 #ifdef FIX_BUGS
@@ -3254,19 +3154,11 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 	case COMMAND_ADD_TIMED_FLOAT_VAR_TO_FLOAT_LVAR:
 #endif
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
-		*fScriptVar1 += CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(BSWAP32(*fScriptVar1) + (CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
-#endif
+		*fScriptVar1 += CTimer::GetTimeStep() * FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	case COMMAND_ADD_TIMED_FLOAT_LVAR_TO_FLOAT_LVAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
 		*fScriptVar1 += CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(BSWAP32(*fScriptVar1) + (CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
-#endif
 		return 0;
 	case COMMAND_SUB_TIMED_VAL_FROM_FLOAT_VAR:
 	{
@@ -3283,11 +3175,7 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
 		CollectParameters(&m_nIp, 1);
-#ifndef BIGENDIAN
 		*(float*)ptr -= CTimer::GetTimeStep() * *(float*)&ScriptParams[0];
-#else
-		*(float*)ptr = FLOATSWAP32(FLOATSWAP32(*(float*)ptr) - (CTimer::GetTimeStep() * *(float*)&ScriptParams[0]));
-#endif
 		return 0;
 	}
 	case COMMAND_SUB_TIMED_FLOAT_VAR_FROM_FLOAT_VAR:
@@ -3295,7 +3183,7 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 #ifndef BIGENDIAN
 		*fScriptVar1 -= CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 #else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) - (CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
+		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) - (CTimer::GetTimeStep() * FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL))));
 #endif
 		return 0;
 #ifdef FIX_BUGS // in SA it was fixed by reversing their order in enum
@@ -3316,19 +3204,11 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 	case COMMAND_SUB_TIMED_FLOAT_VAR_FROM_FLOAT_LVAR:
 #endif
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
-		*fScriptVar1 -= CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) - (CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
-#endif
+		*fScriptVar1 -= CTimer::GetTimeStep() * FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	case COMMAND_SUB_TIMED_FLOAT_LVAR_FROM_FLOAT_LVAR:
 		fScriptVar1 = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#ifndef BIGENDIAN
 		*fScriptVar1 -= CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-#else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) - (CTimer::GetTimeStep() * *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL)));
-#endif
 		return 0;
 	case COMMAND_SET_VAR_INT_TO_VAR_INT:
 	{
@@ -3339,13 +3219,13 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 	case COMMAND_SET_VAR_INT_TO_LVAR_INT:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-		*ptr = *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
+		*ptr = BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_LOCAL));
 		return 0;
 	}
 	case COMMAND_SET_LVAR_INT_TO_VAR_INT:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		*ptr = *GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
+		*ptr = BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	}
 	case COMMAND_SET_LVAR_INT_TO_LVAR_INT:
@@ -3363,13 +3243,13 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 	case COMMAND_SET_VAR_FLOAT_TO_LVAR_FLOAT:
 	{
 		float* ptr = (float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-		*ptr = *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
+		*ptr = FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL));
 		return 0;
 	}
 	case COMMAND_SET_LVAR_FLOAT_TO_VAR_FLOAT:
 	{
 		float* ptr = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		*ptr = *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
+		*ptr = FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	}
 	case COMMAND_SET_LVAR_FLOAT_TO_LVAR_FLOAT:
@@ -3381,19 +3261,21 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 	case COMMAND_CSET_VAR_INT_TO_VAR_FLOAT:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-		*ptr = *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
+		*ptr = FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
+		*ptr = BSWAP32(*ptr);
 		return 0;
 	}
 	case COMMAND_CSET_VAR_INT_TO_LVAR_FLOAT:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 		*ptr = *(float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
+		*ptr = BSWAP32(*ptr);
 		return 0;
 	}
 	case COMMAND_CSET_LVAR_INT_TO_VAR_FLOAT:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		*ptr = *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
+		*ptr = FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	}
 	case COMMAND_CSET_LVAR_INT_TO_LVAR_FLOAT:
@@ -3405,19 +3287,21 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 	case COMMAND_CSET_VAR_FLOAT_TO_VAR_INT:
 	{
 		float* ptr = (float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-		*ptr = *GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
+		*ptr = BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
+		*ptr = FLOATSWAP32(*ptr);
 		return 0;
 	}
 	case COMMAND_CSET_VAR_FLOAT_TO_LVAR_INT:
 	{
 		float* ptr = (float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 		*ptr = *GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
+		*ptr = FLOATSWAP32(*ptr);
 		return 0;
 	}
 	case COMMAND_CSET_LVAR_FLOAT_TO_VAR_INT:
 	{
 		float* ptr = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		*ptr = *GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
+		*ptr = BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL));
 		return 0;
 	}
 	case COMMAND_CSET_LVAR_FLOAT_TO_LVAR_INT:
@@ -3435,19 +3319,19 @@ int8 CRunningScript::ProcessCommands100To199(int32 command)
 	case COMMAND_ABS_LVAR_INT:
 	{
 		int32* ptr = GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		*ptr = BSWAP32(ABS(BSWAP32(*ptr)));
+		*ptr = ABS(*ptr);
 		return 0;
 	}
 	case COMMAND_ABS_VAR_FLOAT:
 	{
 		float* ptr = (float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
-		*ptr = BSWAP32(ABS(BSWAP32(*ptr)));
+		*ptr = FLOATSWAP32(ABS(FLOATSWAP32(*ptr)));
 		return 0;
 	}
 	case COMMAND_ABS_LVAR_FLOAT:
 	{
 		float* ptr = (float*)GetPointerToScriptVariable(&m_nIp, VAR_LOCAL);
-		*ptr = BSWAP32(ABS(BSWAP32(*ptr)));
+		*ptr = ABS(*ptr);
 		return 0;
 	}
 	case COMMAND_GENERATE_RANDOM_FLOAT:
