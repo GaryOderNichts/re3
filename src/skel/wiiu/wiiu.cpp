@@ -1415,13 +1415,6 @@ void CapturePad(RwInt32 padID)
 
 	memcpy(&ControlsManager.m_NewState.status, &status, sizeof(VPADStatus));
 
-	// if (ControlsManager.m_NewState.isGamepad)
-	// {
-	// 	memcpy(&ControlsManager.m_NewState.mappedButtons, gamepadState.buttons, sizeof(gamepadState.buttons));
-	// 	ControlsManager.m_NewState.mappedButtons[15] = gamepadState.axes[4] > -0.8f;
-	// 	ControlsManager.m_NewState.mappedButtons[16] = gamepadState.axes[5] > -0.8f;
-	// }
-
 	if (ControlsManager.m_bFirstCapture == true)
 	{
 		memcpy(&ControlsManager.m_OldState, &ControlsManager.m_NewState, sizeof(ControlsManager.m_NewState));
@@ -1434,14 +1427,11 @@ void CapturePad(RwInt32 padID)
 
 	RsPadEventHandler(rsPADBUTTONUP, (void *)&bs);
 	
-	// // Gamepad axes are guaranteed to return 0.0f if that particular gamepad doesn't have that axis.
-	// if ( glfwPad != -1 ) {
-	// 	leftStickPos.x = ControlsManager.m_NewState.isGamepad ? gamepadState.axes[0] : numAxes >= 1 ? axes[0] : 0.0f;
-	// 	leftStickPos.y = ControlsManager.m_NewState.isGamepad ? gamepadState.axes[1] : numAxes >= 2 ? axes[1] : 0.0f;
+	leftStickPos.x = status.leftStick.x;
+	leftStickPos.y = -status.leftStick.y;
 
-	// 	rightStickPos.x = ControlsManager.m_NewState.isGamepad ? gamepadState.axes[2] : numAxes >= 3 ? axes[2] : 0.0f;
-	// 	rightStickPos.y = ControlsManager.m_NewState.isGamepad ? gamepadState.axes[3] : numAxes >= 4 ? axes[3] : 0.0f;
-	// }
+	rightStickPos.x = status.rightStick.x;
+	rightStickPos.y = -status.rightStick.y;
 	
 	{
 		if (CPad::m_bMapPadOneToPadTwo)
