@@ -107,7 +107,11 @@ enum
 
 #define MAX_STREAMS                2
 
+#ifndef __WIIU__
 #define DIGITALRATE                32000
+#else
+#define DIGITALRATE                44100
+#endif
 #define DIGITALBITS                16
 #define DIGITALCHANNELS            2
 

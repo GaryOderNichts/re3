@@ -57,7 +57,7 @@ void CChannel::Init(bool Is2D)
 		else
 		{
 			if ( IsFXSupported() )
-				reAlGenFilters(1,&alFilter);
+				alGenFilters(1,&alFilter);
 		}
 	}
 }
@@ -72,7 +72,7 @@ void CChannel::Term()
 			alSource3i(alSource, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
 			
 			if(alFilter != AL_FILTER_NULL)
-				reAlDeleteFilters(1,&alFilter);
+				alDeleteFilters(1,&alFilter);
 		}
 
 		alDeleteSources(1, &alSource);

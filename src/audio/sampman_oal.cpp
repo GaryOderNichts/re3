@@ -229,18 +229,18 @@ release_existing()
 	
 	if ( IsFXSupported() )
 	{
-		if ( reAlIsEffect(ALEffect) )
+		if ( alIsEffect(ALEffect) )
 		{
-			reAlEffecti(ALEffect, AL_EFFECT_TYPE, AL_EFFECT_NULL);
-			reAlDeleteEffects(1, &ALEffect);
+			alEffecti(ALEffect, AL_EFFECT_TYPE, AL_EFFECT_NULL);
+			alDeleteEffects(1, &ALEffect);
 			ALEffect = AL_EFFECT_NULL;
 		}
 		
-		if (reAlIsAuxiliaryEffectSlot(ALEffectSlot))
+		if (alIsAuxiliaryEffectSlot(ALEffectSlot))
 		{
-			reAlAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
+			alAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
 			
-			reAlDeleteAuxiliaryEffectSlots(1, &ALEffectSlot);
+			alDeleteAuxiliaryEffectSlots(1, &ALEffectSlot);
 			ALEffectSlot = AL_EFFECTSLOT_NULL;
 		}
 	}
@@ -325,11 +325,13 @@ set_new_provider(int index)
 		
 		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
 		
+#ifndef __WIIU__
 		if ( alcIsExtensionPresent(ALDevice, (ALCchar*)ALC_EXT_EFX_NAME) )
 		{
-			reAlGenAuxiliaryEffectSlots(1, &ALEffectSlot);
-			reAlGenEffects(1, &ALEffect);
+			alGenAuxiliaryEffectSlots(1, &ALEffectSlot);
+			alGenEffects(1, &ALEffect);
 		}
+#endif
 		
 		for ( int32 i = 0; i < MAX_STREAMS; i++ )
 		{
@@ -351,7 +353,8 @@ set_new_provider(int index)
 		usingEAX = 0;
 		usingEAX3 = 0;
 		_usingEFX = false;
-		
+
+#ifndef __WIIU__
 		if ( !strcmp(&providers[index].name[strlen(providers[index].name) - strlen(" EAX3")], " EAX3") 
 				&& alcIsExtensionPresent(ALDevice, (ALCchar*)ALC_EXT_EFX_NAME) )
 		{
@@ -377,6 +380,7 @@ set_new_provider(int index)
 				DEV("EFX\n");
 			}
 		}
+#endif
 		
 		//SampleManager.SetSpeakerConfig(speaker_type);
 				
@@ -387,7 +391,7 @@ set_new_provider(int index)
 		if ( IsFXSupported() )
 		{
 			/**/
-			reAlAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, ALEffect);
+			alAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, ALEffect);
 			/**/
 			
 			for ( int32 i = 0; i < MAXCHANNELS; i++ )
@@ -899,6 +903,13 @@ cSampleManager::LoadPedComment(uint32 nComment)
 #endif
 	nPedSlotSfx[nCurrentPedSlot] = nComment;
 	
+#ifdef BIGENDIAN
+	void* data = (void *)(nSampleBankMemoryStartAddress[SFX_BANK_PED_COMMENTS] + PED_BLOCKSIZE*nCurrentPedSlot);
+	for (int i = 0; i < m_aSamples[nComment].nSize/sizeof(uint16); i++) {
+		((uint16*)data)[i] = BSWAP16(((uint16*)data)[i]);
+	}
+#endif
+
 	alBufferData(pedBuffers[nCurrentPedSlot],
 		AL_FORMAT_MONO16,
 		(void *)(nSampleBankMemoryStartAddress[SFX_BANK_PED_COMMENTS] + PED_BLOCKSIZE*nCurrentPedSlot),
@@ -1025,7 +1036,7 @@ cSampleManager::SetChannelReverbFlag(uint32 nChannel, uint8 nReverbFlag)
 	{
 		if ( IsFXSupported() )
 		{
-			reAlAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, ALEffect);
+			alAuxiliaryEffectSloti(ALEffectSlot, AL_EFFECTSLOT_EFFECT, ALEffect);
 			
 			if ( nReverbFlag != 0 )
 				aChannel[nChannel].SetReverbMix(ALEffectSlot, _fEffectsLevel);
@@ -1048,18 +1059,27 @@ cSampleManager::InitialiseChannel(uint32 nChannel, uint32 nSfx, uint8 nBank)
 			return false;
 		
 		uintptr addr = nSampleBankMemoryStartAddress[nBank] + m_aSamples[nSfx].nOffset - m_aSamples[BankStartOffset[nBank]].nOffset;
-	
-#ifdef BIGENDIAN
-		for (int i = 0; i < m_aSamples[nSfx].nSize / sizeof(uint16); i++)
-			((uint16*)addr)[i] = BSWAP16(((uint16*)addr)[i]);
-#endif
 
 		if ( ALBuffers[nSfx].IsEmpty() )
 		{
+#ifdef BIGENDIAN
+			void* swapBuf = malloc(m_aSamples[nSfx].nSize);
+			memcpy(swapBuf, (void*)addr, m_aSamples[nSfx].nSize);
+			for (int i = 0; i < m_aSamples[nSfx].nSize / sizeof(uint16); i++) {
+				((uint16*)swapBuf)[i] = BSWAP16(((uint16*)swapBuf)[i]);
+			}
+#else
+			void* swapBuf = (void *)addr;
+#endif
+
 			ALuint buf;
 			alGenBuffers(1, &buf);
-			alBufferData(buf, AL_FORMAT_MONO16, (void *)addr, m_aSamples[nSfx].nSize, m_aSamples[nSfx].nFrequency);
+			alBufferData(buf, AL_FORMAT_MONO16, swapBuf, m_aSamples[nSfx].nSize, m_aSamples[nSfx].nFrequency);
 			ALBuffers[nSfx].Set(buf);
+
+#ifdef BIGENDIAN
+			free(swapBuf);
+#endif
 		}
 		ALBuffers[nSfx].Wait();
 		
