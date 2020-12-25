@@ -2957,9 +2957,9 @@ int8 CRunningScript::ProcessCommands0To99(int32 command)
 	case COMMAND_SUB_INT_VAR_FROM_INT_VAR:
 		nScriptVar1 = GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 #ifndef BIGENDIAN
-		*fScriptVar1 += *(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
+		*nScriptVar1 -= GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL);
 #else
-		*fScriptVar1 = FLOATSWAP32(FLOATSWAP32(*fScriptVar1) + FLOATSWAP32(*(float*)GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
+		*nScriptVar1 = BSWAP32(BSWAP32(*nScriptVar1) - BSWAP32(*GetPointerToScriptVariable(&m_nIp, VAR_GLOBAL)));
 #endif
 		return 0;
 	case COMMAND_SUB_INT_LVAR_FROM_INT_LVAR:
