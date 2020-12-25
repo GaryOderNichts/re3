@@ -111,7 +111,7 @@ int32 CControllerConfigManager::GetJoyButtonJustDown()
 		}
 	}
 #elif defined __WIIU__
-	uint32 triggerButtons = m_NewState.status.trigger;
+	uint32 triggerButtons = m_NewState.buttonsTriggered;
 
 	if (triggerButtons & VPAD_BUTTON_A)
 		return 2;
@@ -2428,39 +2428,39 @@ void CControllerConfigManager::UpdateJoyButtonState(int32 padnumber)
 		}
 	}
 #elif defined __WIIU__
-	uint32 heldButtons = m_NewState.status.hold;
+	uint32 heldButtons = m_NewState.buttonsHeld;
 
 	if (heldButtons & VPAD_BUTTON_A)
 		m_aButtonStates[1] = 1;
-	else if (heldButtons & VPAD_BUTTON_B)
+	if (heldButtons & VPAD_BUTTON_B)
 		m_aButtonStates[0] = 1;
-	else if (heldButtons & VPAD_BUTTON_X)
+	if (heldButtons & VPAD_BUTTON_X)
 		m_aButtonStates[2] = 1;
-	else if (heldButtons & VPAD_BUTTON_Y)
+	if (heldButtons & VPAD_BUTTON_Y)
 		m_aButtonStates[3] = 1;
-	else if (heldButtons & VPAD_BUTTON_ZL)
+	if (heldButtons & VPAD_BUTTON_ZL)
 		m_aButtonStates[6] = 1;
-	else if (heldButtons & VPAD_BUTTON_ZR)
+	if (heldButtons & VPAD_BUTTON_ZR)
 		m_aButtonStates[7] = 1;
-	else if (heldButtons & VPAD_BUTTON_MINUS)
+	if (heldButtons & VPAD_BUTTON_MINUS)
 		m_aButtonStates[8] = 1;
-	else if (heldButtons & VPAD_BUTTON_PLUS)
+	if (heldButtons & VPAD_BUTTON_PLUS)
 		m_aButtonStates[11] = 1;
-	else if (heldButtons & VPAD_BUTTON_STICK_L)
+	if (heldButtons & VPAD_BUTTON_STICK_L)
 		m_aButtonStates[9] = 1;
-	else if (heldButtons & VPAD_BUTTON_STICK_R)
+	if (heldButtons & VPAD_BUTTON_STICK_R)
 		m_aButtonStates[10] = 1;
-	else if (heldButtons & VPAD_BUTTON_UP)
+	if (heldButtons & VPAD_BUTTON_UP)
 		m_aButtonStates[12] = 1;
-	else if (heldButtons & VPAD_BUTTON_RIGHT)
+	if (heldButtons & VPAD_BUTTON_RIGHT)
 		m_aButtonStates[13] = 1;
-	else if (heldButtons & VPAD_BUTTON_DOWN)
+	if (heldButtons & VPAD_BUTTON_DOWN)
 		m_aButtonStates[14] = 1;
-	else if (heldButtons & VPAD_BUTTON_LEFT)
+	if (heldButtons & VPAD_BUTTON_LEFT)
 		m_aButtonStates[15] = 1;
-	else if (heldButtons & VPAD_BUTTON_L)
+	if (heldButtons & VPAD_BUTTON_L)
 		m_aButtonStates[4] = 1;
-	else if (heldButtons & VPAD_BUTTON_R)
+	if (heldButtons & VPAD_BUTTON_R)
 		m_aButtonStates[5] = 1;
 #endif
 }

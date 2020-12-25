@@ -5046,7 +5046,7 @@ CMenuManager::ProcessButtonPresses(void)
 							ControlsManager.InitDefaultControlConfigJoyPad(devCaps.dwButtons);
 						}
 #elif __WIIU__
-// TODO wiiu
+						ControlsManager.InitDefaultControlConfigJoyPad(16);
 #else
 						if (PSGLOBAL(joy1id) != -1 && glfwJoystickPresent(PSGLOBAL(joy1id))) {
 							int count;

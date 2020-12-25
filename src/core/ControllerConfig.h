@@ -119,7 +119,8 @@ struct GlfwJoyState {
 
 #ifdef __WIIU__
 struct WiiUJoyState {
-	VPADStatus status;
+	uint32 buttonsTriggered;
+	uint32 buttonsHeld;
 };
 #endif
 
@@ -142,7 +143,7 @@ public:
 #if defined RW_GL3
 	GlfwJoyState           m_OldState;
 	GlfwJoyState           m_NewState;
-#elif __WIIU__
+#elif defined __WIIU__
 	WiiUJoyState       	  m_OldState;
 	WiiUJoyState		  m_NewState;
 #else

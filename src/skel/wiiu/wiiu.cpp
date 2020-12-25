@@ -9,6 +9,8 @@
 #include <whb/log_udp.h>
 
 #include <vpad/input.h>
+#include <padscore/kpad.h>
+#include <padscore/wpad.h>
 
 #include <coreinit/time.h>
 
@@ -615,15 +617,14 @@ psSelectDevice()
 
 void _InputInitialiseJoys()
 {
+	KPADInit();
+	WPADEnableURCC(1);
 
-    // TODO: wiiu 
-    uint32 buttons = 0;
-	ControlsManager.InitDefaultControlConfigJoyPad(buttons);
+	ControlsManager.InitDefaultControlConfigJoyPad(16);
 }
 
 long _InputInitialiseMouse()
 {
-	// TODO: wiiu
 	return 0;
 }
 
@@ -1394,26 +1395,131 @@ main(int argc, char *argv[])
 	return 0;
 }
 
+static uint32_t remapProControllerButtons(uint32_t buttons)
+{
+	uint32_t conv_buttons = 0;
+
+	if(buttons & WPAD_PRO_BUTTON_LEFT)
+		conv_buttons |= VPAD_BUTTON_LEFT;
+
+	if(buttons & WPAD_PRO_BUTTON_RIGHT)
+		conv_buttons |= VPAD_BUTTON_RIGHT;
+
+	if(buttons & WPAD_PRO_BUTTON_DOWN)
+		conv_buttons |= VPAD_BUTTON_DOWN;
+
+	if(buttons & WPAD_PRO_BUTTON_UP)
+		conv_buttons |= VPAD_BUTTON_UP;
+
+	if(buttons & WPAD_PRO_BUTTON_PLUS)
+		conv_buttons |= VPAD_BUTTON_PLUS;
+
+	if(buttons & WPAD_PRO_BUTTON_X)
+		conv_buttons |= VPAD_BUTTON_X;
+
+	if(buttons & WPAD_PRO_BUTTON_Y)
+		conv_buttons |= VPAD_BUTTON_Y;
+
+	if(buttons & WPAD_PRO_BUTTON_B)
+		conv_buttons |= VPAD_BUTTON_B;
+
+	if(buttons & WPAD_PRO_BUTTON_A)
+		conv_buttons |= VPAD_BUTTON_A;
+
+	if(buttons & WPAD_PRO_BUTTON_MINUS)
+		conv_buttons |= VPAD_BUTTON_MINUS;
+
+	if(buttons & WPAD_PRO_BUTTON_HOME)
+		conv_buttons |= VPAD_BUTTON_HOME;
+
+	if(buttons & WPAD_PRO_TRIGGER_ZR)
+		conv_buttons |= VPAD_BUTTON_ZR;
+
+	if(buttons & WPAD_PRO_TRIGGER_ZL)
+		conv_buttons |= VPAD_BUTTON_ZL;
+
+	if(buttons & WPAD_PRO_TRIGGER_R)
+		conv_buttons |= VPAD_BUTTON_R;
+
+	if(buttons & WPAD_PRO_TRIGGER_L)
+		conv_buttons |= VPAD_BUTTON_L;
+
+	if (buttons & WPAD_PRO_BUTTON_STICK_L)
+		conv_buttons |= VPAD_BUTTON_STICK_L;
+
+	if (buttons & WPAD_PRO_BUTTON_STICK_R)
+		conv_buttons |= VPAD_BUTTON_STICK_R;
+
+	return conv_buttons;
+}
+
 RwV2d leftStickPos;
 RwV2d rightStickPos;
 
 void CapturePad(RwInt32 padID)
 {
-	// TODO proper inputs 
-
 	if (padID != 0)
 		return;
 	
-	int numButtons, numAxes;
-	VPADStatus status;
-	VPADRead(VPAD_CHAN_0, &status, 1, NULL);
+	uint32 buttonsTriggered = 0;
+	uint32 buttonsHeld = 0;
+	leftStickPos.x = 0.0f;
+	leftStickPos.y = 0.0f;
+
+	rightStickPos.x = 0.0f;
+	rightStickPos.y = 0.0f;
+
+	VPADStatus vpad_data{};
+	VPADReadError vpad_err;
+	VPADRead(VPAD_CHAN_0, &vpad_data, 1, &vpad_err);
+	if (vpad_err == VPAD_READ_SUCCESS) {
+		buttonsTriggered |= vpad_data.trigger;
+		buttonsHeld |= vpad_data.hold;
+
+		leftStickPos.x += vpad_data.leftStick.x;
+		leftStickPos.y += -vpad_data.leftStick.y;
+
+		rightStickPos.x += vpad_data.rightStick.x;
+		rightStickPos.y += -vpad_data.rightStick.y;
+	}
+
+	KPADStatus kpad_data{};
+	int32_t kpad_err;
+	for (int i = 0; i < 4; i++) {
+		KPADReadEx((KPADChan)i, &kpad_data, 1, &kpad_err);
+		if (kpad_err == KPAD_ERROR_OK) {
+			if (kpad_data.extensionType == WPAD_EXT_PRO_CONTROLLER) {
+				buttonsTriggered |= remapProControllerButtons(kpad_data.pro.trigger);
+				buttonsHeld |= remapProControllerButtons(kpad_data.pro.hold);
+
+				leftStickPos.x += kpad_data.pro.leftStick.x;
+				leftStickPos.y += -kpad_data.pro.leftStick.y;
+
+				rightStickPos.x += kpad_data.pro.rightStick.x;
+				rightStickPos.y += -kpad_data.pro.rightStick.y;
+			}
+			/* maybe support classic controllers in the future?
+			   what about stick l and r down? */
+		}
+	}
+
+	leftStickPos.x = leftStickPos.x > 1.0f ? 1.0f : leftStickPos.x;
+	leftStickPos.x = leftStickPos.x < -1.0f ? -1.0f : leftStickPos.x;
+	leftStickPos.y = leftStickPos.y > 1.0f ? 1.0f : leftStickPos.y;
+	leftStickPos.y = leftStickPos.y < -1.0f ? -1.0f : leftStickPos.y;
+
+	rightStickPos.x = rightStickPos.x > 1.0f ? 1.0f : rightStickPos.x;
+	rightStickPos.x = rightStickPos.x < -1.0f ? -1.0f : rightStickPos.x;
+	rightStickPos.y = rightStickPos.y > 1.0f ? 1.0f : rightStickPos.y;
+	rightStickPos.y = rightStickPos.y < -1.0f ? -1.0f : rightStickPos.y;
 
 	if (ControlsManager.m_bFirstCapture == false)
 	{
 		memcpy(&ControlsManager.m_OldState, &ControlsManager.m_NewState, sizeof(ControlsManager.m_NewState));
 	}
 
-	memcpy(&ControlsManager.m_NewState.status, &status, sizeof(VPADStatus));
+	ControlsManager.m_NewState.buttonsTriggered = buttonsTriggered;
+	ControlsManager.m_NewState.buttonsHeld = buttonsHeld;
 
 	if (ControlsManager.m_bFirstCapture == true)
 	{
@@ -1426,12 +1532,6 @@ void CapturePad(RwInt32 padID)
 	bs.padID = padID;
 
 	RsPadEventHandler(rsPADBUTTONUP, (void *)&bs);
-	
-	leftStickPos.x = status.leftStick.x;
-	leftStickPos.y = -status.leftStick.y;
-
-	rightStickPos.x = status.rightStick.x;
-	rightStickPos.y = -status.rightStick.y;
 	
 	{
 		if (CPad::m_bMapPadOneToPadTwo)
