@@ -446,7 +446,8 @@ inline void SkipSaveBuf(uint8 *&buf, int32 skip)
 template<typename T>
 inline const T ReadSaveBuf(uint8 *&buf)
 {
-	T &value = *(T*)buf;
+	T value;
+	memcpy(&value, buf, sizeof(T));
 	SkipSaveBuf(buf, sizeof(T));
 	return value;
 }
@@ -454,10 +455,10 @@ inline const T ReadSaveBuf(uint8 *&buf)
 template<typename T>
 inline T *WriteSaveBuf(uint8 *&buf, const T &value)
 {
-	T *p = (T*)buf;
-	*p = value;
+	memcpy(buf, &value, sizeof(T));
+	T* result = (T*)buf;
 	SkipSaveBuf(buf, sizeof(T));
-	return p;
+	return result;
 }
 
 
