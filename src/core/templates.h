@@ -35,8 +35,14 @@ class CPool
 	U     *m_entries;
 	union Flags {
 		struct {
+			// bitfields are compiler and endian specific
+#ifdef BIGENDIAN
+			uint8 free : 1;
+			uint8 id   : 7;
+#else
 			uint8 id   : 7;
 			uint8 free : 1;
+#endif
 		};
 			uint8 u;
 	}     *m_flags;
