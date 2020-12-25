@@ -71,6 +71,10 @@ void CapturePad(RwInt32 padID);
 void joysChangeCB(int jid, int event);
 #endif
 
+#ifdef DONT_TRUST_RECOGNIZED_JOYSTICKS
+extern char gSelectedJoystickName[128];
+#endif
+
 enum eGameState
 {
     GS_START_UP = 0,
@@ -83,9 +87,6 @@ enum eGameState
     GS_FRONTEND,
     GS_INIT_PLAYING_GAME,
     GS_PLAYING_GAME,
-#ifndef MASTER
-    GS_ANIMVIEWER,
-#endif
 };
 extern RwUInt32 gGameState;
 

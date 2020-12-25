@@ -97,6 +97,7 @@ static psGlobalType PsGlobal;
 #include "Sprite2d.h"
 #include "AnimViewer.h"
 #include "Font.h"
+#include "MemoryMgr.h"
 
 VALIDATE_SIZE(psGlobalType, 0x28);
 
@@ -304,7 +305,11 @@ psMouseSetPos(RwV2d *pos)
 RwMemoryFunctions*
 psGetMemoryFunctions(void)
 {
+#ifdef USE_CUSTOM_ALLOCATOR
+	return &memFuncs;
+#else
 	return nil;
+#endif
 }
 
 /*
@@ -646,7 +651,7 @@ psInitialize(void)
 	C_PcSave::SetSaveDirectory(_psGetUserFilesFolder());
 	
 	InitialiseLanguage();
-#ifndef GTA3_1_1_PATCH
+#if GTA_VERSION >= GTA3_PC_11
 	FrontEndMenuManager.LoadSettings();
 #endif
 
@@ -684,7 +689,7 @@ psInitialize(void)
 	}
 	else if ( verInfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS )
 	{
-		if ( verInfo.dwMajorVersion > 4 || verInfo.dwMajorVersion == 4 && verInfo.dwMinorVersion == 1 )
+		if ( verInfo.dwMajorVersion > 4 || verInfo.dwMajorVersion == 4 && verInfo.dwMinorVersion != 0 )
 		{
 			debug("Operating System is Win98\n");
 			_dwOperatingSystemVersion = OS_WIN98;
@@ -698,7 +703,7 @@ psInitialize(void)
 
 #ifndef PS2_MENU
 
-#ifdef GTA3_1_1_PATCH
+#if GTA_VERSION >= GTA3_PC_11
 	FrontEndMenuManager.LoadSettings();
 #endif
 
@@ -1012,9 +1017,10 @@ MainWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 			RECT				rect;
 
 			/* redraw window */
-			if (RwInitialised && (gGameState == GS_PLAYING_GAME || gGameState == GS_ANIMVIEWER))
+
+			if (RwInitialised && gGameState == GS_PLAYING_GAME)
 			{
-				RsEventHandler((gGameState == GS_PLAYING_GAME ? rsIDLE : rsANIMVIEWER), (void *)TRUE);
+				RsEventHandler(rsIDLE, (void *)TRUE);
 			}
 
 			/* Manually resize window */
@@ -1369,14 +1375,20 @@ UINT GetBestRefreshRate(UINT width, UINT height, UINT depth)
 #endif	
 		if ( mode.Width == width && mode.Height == height && mode.Format == format )
 		{
-			if ( mode.RefreshRate == 0 )
+			if ( mode.RefreshRate == 0 ) {
+				// From VC
+#ifdef FIX_BUGS
+				d3d->Release();
+#endif
 				return 0;
+			}
 
 			if ( mode.RefreshRate < refreshRate && mode.RefreshRate >= 60 )
 				refreshRate = mode.RefreshRate;
 		}
 	}
 	
+	// From VC
 #ifdef FIX_BUGS
 	d3d->Release();
 #endif
@@ -1994,12 +2006,18 @@ WinMain(HINSTANCE instance,
 	RwChar **argv;
 	SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, nil, SPIF_SENDCHANGE);
 
-#if 0
-	// TODO: make this an option somewhere
-	AllocConsole();
-	freopen("CONIN$", "r", stdin);
-	freopen("CONOUT$", "w", stdout);
-	freopen("CONOUT$", "w", stderr);
+#ifndef MASTER
+	if (strstr(cmdLine, "-console"))
+	{
+		AllocConsole();
+		freopen("CONIN$", "r", stdin);
+		freopen("CONOUT$", "w", stdout);
+		freopen("CONOUT$", "w", stderr);
+	}
+#endif
+
+#ifdef USE_CUSTOM_ALLOCATOR
+	InitMemoryMgr();
 #endif
 
 	/* 
@@ -2160,17 +2178,17 @@ WinMain(HINSTANCE instance,
 	}
 #endif
 
-	if (TurnOnAnimViewer)
-	{
 #ifndef MASTER
+	if (gbModelViewer) {
+		// This is TheModelViewer in LCS, but not compiled on III Mobile.
+		LoadingScreen("Loading the ModelViewer", NULL, GetRandomSplashScreen());
 		CAnimViewer::Initialise();
+		CTimer::Update();
 #ifndef PS2_MENU
 		FrontEndMenuManager.m_bGameNotLoaded = false;
 #endif
-		gGameState = GS_ANIMVIEWER;
-		TurnOnAnimViewer = false;
-#endif
 	}
+#endif
 
 	while ( TRUE )
 	{
@@ -2215,6 +2233,12 @@ WinMain(HINSTANCE instance,
 					DispatchMessage(&message);
 				}
 			}
+#ifndef MASTER
+			else if (gbModelViewer) {
+				// This is TheModelViewerCore in LCS
+				TheModelViewer();
+			}
+#endif
 			else if( ForegroundApp )
 			{
 				switch ( gGameState )
@@ -2428,18 +2452,6 @@ WinMain(HINSTANCE instance,
 						}
 						break;
 					}
-#ifndef MASTER
-					case GS_ANIMVIEWER:
-					{
-						float ms = (float)CTimer::GetCurrentTimeInCycles() / (float)CTimer::GetCyclesPerMillisecond();
-						if (RwInitialised)
-						{
-							if (!CMenuManager::m_PrefsFrameLimiter || (1000.0f / (float)RsGlobal.maxFPS) < ms)
-								RsEventHandler(rsANIMVIEWER, (void*)TRUE);
-						}
-						break;
-					}
-#endif
 				}
 			}
 			else
@@ -2511,13 +2523,14 @@ WinMain(HINSTANCE instance,
 		}
 		else
 		{
+#ifndef MASTER
+			if ( gbModelViewer )
+				CAnimViewer::Shutdown();
+			else
+#endif
 			if ( gGameState == GS_PLAYING_GAME )
 				CGame::ShutDown();
-#ifndef MASTER
-			else if ( gGameState == GS_ANIMVIEWER )
-				CAnimViewer::Shutdown();
-#endif
-			
+
 			CTimer::Stop();
 			
 			if ( FrontEndMenuManager.m_bFirstTime == true )
@@ -2538,12 +2551,13 @@ WinMain(HINSTANCE instance,
 	}
 	
 
+#ifndef MASTER
+	if ( gbModelViewer )
+		CAnimViewer::Shutdown();
+	else
+#endif
 	if ( gGameState == GS_PLAYING_GAME )
 		CGame::ShutDown();
-#ifndef MASTER
-	else if ( gGameState == GS_ANIMVIEWER )
-		CAnimViewer::Shutdown();
-#endif
 
 	DMAudio.Terminate();
 	

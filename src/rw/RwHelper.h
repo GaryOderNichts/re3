@@ -2,15 +2,14 @@
 
 extern bool gPS2alphaTest;
 
-void *RwMallocAlign(RwUInt32 size, RwUInt32 align);
-void RwFreeAlign(void *mem);
-
 void OpenCharsetSafe();
 void CreateDebugFont();
 void DestroyDebugFont();
 void ObrsPrintfString(const char *str, short x, short y);
 void FlushObrsPrintfs();
 void DefinedState(void);
+void SetAlphaRef(int ref);
+void SetCullMode(uint32 mode);
 RwFrame *GetFirstChild(RwFrame *frame);
 RwObject *GetFirstObject(RwFrame *frame);
 RpAtomic *GetFirstAtomic(RpClump *clump);
@@ -51,8 +50,8 @@ RwCamera *CameraCreate(RwInt32 width,
                        RwBool zBuffer);
 
 					   
-void _TexturePoolsInitialise();
-void _TexturePoolsShutdown();
+
+RpAtomic *ConvertPlatformAtomic(RpAtomic *atomic, void *data);
 
 #if defined(FIX_BUGS) && defined (GTA_PC)
 void SetAlphaTest(RwUInt32 alpharef);

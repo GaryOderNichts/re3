@@ -57,14 +57,6 @@ enum eLights
 	VEHLIGHT_REAR_RIGHT,
 };
 
-enum eWheels
-{
-	VEHWHEEL_FRONT_LEFT,
-	VEHWHEEL_FRONT_RIGHT,
-	VEHWHEEL_REAR_LEFT,
-	VEHWHEEL_REAR_RIGHT,
-};
-
 enum
 {
 	CAR_PIECE_BONNET = 1,
@@ -103,6 +95,15 @@ enum eFlightModel
 	FLIGHT_MODEL_SEAPLANE
 };
 
+// TODO: what is this even?
+enum eBikeWheelSpecial {
+	BIKE_WHEELSPEC_0, // both wheels on ground
+	BIKE_WHEELSPEC_1, // rear wheel on ground
+	BIKE_WHEELSPEC_2, // only front wheel on ground
+	BIKE_WHEELSPEC_3, // can't happen
+};
+
+
 class CVehicle : public CPhysical
 {
 public:
@@ -111,7 +112,7 @@ public:
 	CAutoPilot AutoPilot;
 	uint8 m_currentColour1;
 	uint8 m_currentColour2;
-	uint8 m_aExtras[2];
+	int8 m_aExtras[2];
 	int16 m_nAlarmState;
 	int16 m_nMissionValue;
 	CPed *pDriver;
@@ -237,6 +238,8 @@ public:
 	void FlyingControl(eFlightModel flightModel);
 	void ProcessWheel(CVector &wheelFwd, CVector &wheelRight, CVector &wheelContactSpeed, CVector &wheelContactPoint,
 		int32 wheelsOnGround, float thrust, float brake, float adhesion, int8 wheelId, float *wheelSpeed, tWheelState *wheelState, uint16 wheelStatus);
+	void ProcessBikeWheel(CVector &wheelFwd, CVector &wheelRight, CVector &wheelContactSpeed, CVector &wheelContactPoint, int32 wheelsOnGround, float thrust,
+	                      float brake, float adhesion, int8 wheelId, float *wheelSpeed, tWheelState *wheelState, eBikeWheelSpecial special, uint16 wheelStatus);
 	void ExtinguishCarFire(void);
 	void ProcessDelayedExplosion(void);
 	float ProcessWheelRotation(tWheelState state, const CVector &fwd, const CVector &speed, float radius);

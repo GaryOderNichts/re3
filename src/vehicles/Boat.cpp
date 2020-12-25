@@ -50,7 +50,7 @@ CBoat::CBoat(int mi, uint8 owner) : CVehicle(owner)
 	m_fMovingRotation = 0.0f;
 	SetModelIndex(mi);
 
-	pHandling = mod_HandlingManager.GetHandlingData((eHandlingId)minfo->m_handlingId);
+	pHandling = mod_HandlingManager.GetHandlingData((tVehicleType)minfo->m_handlingId);
 	minfo->ChooseVehicleColour(m_currentColour1, m_currentColour2);
 
 	m_fMass = pHandling->fMass;
@@ -664,7 +664,7 @@ CBoat::BlowUpCar(CEntity *culprit)
 	obj->m_fElasticity = 0.1f;
 	obj->m_fBuoyancy = obj->m_fMass*GRAVITY/0.75f;
 	obj->ObjectCreatedBy = TEMP_OBJECT;
-	obj->bIsStatic = false;
+	obj->SetIsStatic(false);
 	obj->bIsPickup = false;
 
 	// life time

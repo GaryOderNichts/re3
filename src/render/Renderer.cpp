@@ -21,12 +21,14 @@
 #include "Renderer.h"
 #include "Frontend.h"
 #include "custompipes.h"
+#include "Debug.h"
 
 bool gbShowPedRoadGroups;
 bool gbShowCarRoadGroups;
 bool gbShowCollisionPolys;
 bool gbShowCollisionLines;
 bool gbShowCullZoneDebugStuff;
+bool gbDisableZoneCull;	// not original
 bool gbBigWhiteDebugLightSwitchedOn;
 
 bool gbDontRenderBuildings;
@@ -34,6 +36,25 @@ bool gbDontRenderBigBuildings;
 bool gbDontRenderPeds;
 bool gbDontRenderObjects;
 bool gbDontRenderVehicles;
+
+int32 EntitiesRendered;
+int32 EntitiesNotRendered;
+int32 RenderedBigBuildings;
+int32 RenderedBuildings;
+int32 RenderedCars;
+int32 RenderedPeds;
+int32 RenderedObjects;
+int32 RenderedDummies;
+int32 TestedBigBuildings;
+int32 TestedBuildings;
+int32 TestedCars;
+int32 TestedPeds;
+int32 TestedObjects;
+int32 TestedDummies;
+
+// unused
+int16 TestCloseThings;
+int16 TestBigThings;
 
 struct EntityInfo
 {
@@ -52,6 +73,19 @@ CVector CRenderer::ms_vecCameraPosition;
 CVehicle *CRenderer::m_pFirstPersonVehicle;
 bool CRenderer::m_loadingPriority;
 float CRenderer::ms_lodDistScale = 1.2f;
+
+#ifdef EXTRA_MODEL_FLAGS
+#define BACKFACE_CULLING_ON SetCullMode(rwCULLMODECULLBACK)
+#define BACKFACE_CULLING_OFF SetCullMode(rwCULLMODECULLNONE)
+#else
+#define BACKFACE_CULLING_ON
+#define BACKFACE_CULLING_OFF
+#endif
+
+// unused
+BlockedRange CRenderer::aBlockedRanges[16];
+BlockedRange *CRenderer::pFullBlockedRanges;
+BlockedRange *CRenderer::pEmptyBlockedRanges;
 
 void
 CRenderer::Init(void)
@@ -101,6 +135,13 @@ CRenderer::RenderOneRoad(CEntity *e)
 	else{
 #ifdef EXTENDED_PIPELINES
 		CustomPipes::AttachGlossPipe(e->GetAtomic());
+#endif
+#ifdef EXTRA_MODEL_FLAGS
+	if(!e->IsBuilding() || CModelInfo::GetModelInfo(e->GetModelIndex())->RenderDoubleSided()){
+		BACKFACE_CULLING_OFF;
+		e->Render();
+		BACKFACE_CULLING_ON;
+	}else
 #endif
 		e->Render();
 	}
@@ -163,13 +204,23 @@ CRenderer::RenderOneNonRoad(CEntity *e)
 		for(i = 0; i < 8; i++)
 			if(veh->pPassengers[i] && veh->pPassengers[i]->m_nPedState == PED_DRIVING)
 				veh->pPassengers[i]->Render();
+		BACKFACE_CULLING_OFF;
 	}
+#ifdef EXTRA_MODEL_FLAGS
+	if(!e->IsBuilding() || CModelInfo::GetModelInfo(e->GetModelIndex())->RenderDoubleSided()){
+		BACKFACE_CULLING_OFF;
+		e->Render();
+		BACKFACE_CULLING_ON;
+	}else
+#endif
 	e->Render();
 
 	if(e->IsVehicle()){
+		BACKFACE_CULLING_OFF;
 		e->bImBeingRendered = true;
 		CVisibilityPlugins::RenderAlphaAtomics();
 		e->bImBeingRendered = false;
+		BACKFACE_CULLING_ON;
 	}
 
 	e->RemoveLighting(resetLights);
@@ -197,6 +248,7 @@ CRenderer::RenderRoads(void)
 	CTreadable *t;
 
 	RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)TRUE);
+	BACKFACE_CULLING_ON;
 	DeActivateDirectional();
 	SetAmbientColours();
 
@@ -230,6 +282,7 @@ CRenderer::RenderEverythingBarRoads(void)
 	CVector dist;
 	EntityInfo ei;
 
+	BACKFACE_CULLING_ON;
 	gSortedVehiclesAndPeds.Clear();
 
 	for(i = 0; i < ms_nNoOfVisibleEntities; i++){
@@ -284,6 +337,8 @@ CRenderer::RenderBoats(void)
 {
 	CLink<EntityInfo> *node;
 
+	BACKFACE_CULLING_ON;
+
 	for(node = gSortedVehiclesAndPeds.tail.prev;
 	    node != &gSortedVehiclesAndPeds.head;
 	    node = node->prev){
@@ -298,6 +353,7 @@ void
 CRenderer::RenderFadingInEntities(void)
 {
 	RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)TRUE);
+	BACKFACE_CULLING_ON;
 	DeActivateDirectional();
 	SetAmbientColours();
 	CVisibilityPlugins::RenderFadingEntities();
@@ -318,6 +374,14 @@ CRenderer::RenderCollisionLines(void)
 	}
 }
 
+// unused
+void
+CRenderer::RenderBlockBuildingLines(void)
+{
+	for(BlockedRange *br = pFullBlockedRanges; br; br = br->next)
+		printf("Blocked: %f %f\n", br->a, br->b);
+}
+
 enum Visbility
 {
 	VIS_INVISIBLE,
@@ -325,14 +389,6 @@ enum Visbility
 	VIS_OFFSCREEN,
 	VIS_STREAMME
 };
-
-#ifdef FIX_BUGS
-#define LOD_DISTANCE (300.0f*TheCamera.LODDistMultiplier)
-#else
-#define LOD_DISTANCE 300.0f
-#endif
-#define FADE_DISTANCE 20.0f
-#define STREAM_DISTANCE 30.0f
 
 // Time Objects can be time culled if
 //   other == -1 || CModelInfo::GetModelInfo(other)->GetRwObject()
@@ -541,7 +597,7 @@ CRenderer::SetupBigBuildingVisibility(CEntity *ent)
 		// that of an atomic for another draw distance.
 		if(RpAtomicGetGeometry(a) != RpAtomicGetGeometry(rwobj))
 			RpAtomicSetGeometry(rwobj, RpAtomicGetGeometry(a), rpATOMICSAMEBOUNDINGSPHERE); // originally 5 (mistake?)
-		if(!ent->IsVisibleComplex())
+		if (!ent->IsVisible() || !ent->GetIsOnScreenComplex())
 			return VIS_INVISIBLE;
 		if(mi->m_drawLast){
 			CVisibilityPlugins::InsertEntityIntoSortedList(ent, dist);
@@ -571,7 +627,7 @@ CRenderer::SetupBigBuildingVisibility(CEntity *ent)
 	RpAtomic *rwobj = (RpAtomic*)ent->m_rwObject;
 	if(RpAtomicGetGeometry(a) != RpAtomicGetGeometry(rwobj))
 		RpAtomicSetGeometry(rwobj, RpAtomicGetGeometry(a), rpATOMICSAMEBOUNDINGSPHERE); // originally 5 (mistake?)
-	if(ent->IsVisibleComplex())
+	if (ent->IsVisible() && ent->GetIsOnScreenComplex())
 		CVisibilityPlugins::InsertEntityIntoSortedList(ent, dist);
 	return VIS_INVISIBLE;
 }
@@ -582,7 +638,21 @@ CRenderer::ConstructRenderList(void)
 	ms_nNoOfVisibleEntities = 0;
 	ms_nNoOfInVisibleEntities = 0;
 	ms_vecCameraPosition = TheCamera.GetPosition();
-	// TODO: blocked ranges, but unused
+
+	// unused
+	pFullBlockedRanges = nil;
+	pEmptyBlockedRanges = aBlockedRanges;
+	for(int i = 0; i < 16; i++){
+		aBlockedRanges[i].prev = &aBlockedRanges[i-1];
+		aBlockedRanges[i].next = &aBlockedRanges[i+1];
+	}
+	aBlockedRanges[0].prev = nil;
+	aBlockedRanges[15].next = nil;
+
+	// unused
+	TestCloseThings = 0;
+	TestBigThings = 0;
+
 	ScanWorld();
 }
 
@@ -617,6 +687,24 @@ CRenderer::ScanWorld(void)
 	CVector vectors[9];
 	RwMatrix *cammatrix;
 	RwV2d poly[3];
+
+#ifndef MASTER
+	// missing in game but has to be done somewhere
+	EntitiesRendered = 0;
+	EntitiesNotRendered = 0;
+	RenderedBigBuildings = 0;
+	RenderedBuildings = 0;
+	RenderedCars = 0;
+	RenderedPeds = 0;
+	RenderedObjects = 0;
+	RenderedDummies = 0;
+	TestedBigBuildings = 0;
+	TestedBuildings = 0;
+	TestedCars = 0;
+	TestedPeds = 0;
+	TestedObjects = 0;
+	TestedDummies = 0;
+#endif
 
 	memset(vectors, 0, sizeof(vectors));
 	vectors[CORNER_FAR_TOPLEFT].x = -vw.x * f;
@@ -653,7 +741,7 @@ CRenderer::ScanWorld(void)
 	vectors[CORNER_PRIO_RIGHT].x = vectors[CORNER_LOD_RIGHT].x * 0.2f;
 	vectors[CORNER_PRIO_RIGHT].y = vectors[CORNER_LOD_RIGHT].y * 0.2f;
 	vectors[CORNER_PRIO_RIGHT].z = vectors[CORNER_LOD_RIGHT].z;
-	RwV3dTransformPoints((RwV3d*)vectors, (RwV3d*)vectors, 9, cammatrix);
+	RwV3dTransformPoints(vectors, vectors, 9, cammatrix);
 
 	m_loadingPriority = false;
 	if(TheCamera.Cams[TheCamera.ActiveCam].Mode == CCam::MODE_TOPDOWN ||
@@ -736,6 +824,19 @@ CRenderer::ScanWorld(void)
 			ScanBigBuildingList(CWorld::GetBigBuildingList(LEVEL_GENERIC));
 		}
 	}
+
+#ifndef MASTER
+	if(gbShowCullZoneDebugStuff){
+		sprintf(gString, "Rejected: %d/%d.", EntitiesNotRendered, EntitiesNotRendered + EntitiesRendered);
+		CDebug::PrintAt(gString, 10, 10);
+		sprintf(gString, "Tested:BBuild:%d Build:%d Peds:%d Cars:%d Obj:%d Dummies:%d",
+			TestedBigBuildings, TestedBuildings, TestedPeds, TestedCars, TestedObjects, TestedDummies);
+		CDebug::PrintAt(gString, 10, 11);
+		sprintf(gString, "Rendered:BBuild:%d Build:%d Peds:%d Cars:%d Obj:%d Dummies:%d",
+			RenderedBigBuildings, RenderedBuildings, RenderedPeds, RenderedCars, RenderedObjects, RenderedDummies);
+		CDebug::PrintAt(gString, 10, 12);
+	}
+#endif
 }
 
 void
@@ -780,7 +881,7 @@ CRenderer::RequestObjectsInFrustum(void)
 	vectors[CORNER_PRIO_RIGHT].x = vectors[CORNER_LOD_RIGHT].x * 0.2f;
 	vectors[CORNER_PRIO_RIGHT].y = vectors[CORNER_LOD_RIGHT].y * 0.2f;
 	vectors[CORNER_PRIO_RIGHT].z = vectors[CORNER_LOD_RIGHT].z;
-	RwV3dTransformPoints((RwV3d*)vectors, (RwV3d*)vectors, 9, cammatrix);
+	RwV3dTransformPoints(vectors, vectors, 9, cammatrix);
 
 	if(TheCamera.Cams[TheCamera.ActiveCam].Mode == CCam::MODE_TOPDOWN ||
 #ifdef FIX_BUGS
@@ -817,6 +918,37 @@ CRenderer::RequestObjectsInFrustum(void)
 		poly[2].y = CWorld::GetSectorY(vectors[CORNER_LOD_RIGHT].y);
 		ScanSectorPoly(poly, 3, ScanSectorList_RequestModels);
 	}
+}
+
+bool
+CPed::SetupLighting(void)
+{
+	ActivateDirectional();
+	SetAmbientColoursForPedsCarsAndObjects();
+
+#ifndef MASTER
+	// Originally this was being called through iteration of Sectors, but putting it here is better.
+	if (GetDebugDisplay() != 0 && !IsPlayer())
+		DebugRenderOnePedText();
+#endif
+
+	if (bRenderScorched) {
+		WorldReplaceNormalLightsWithScorched(Scene.world, 0.1f);
+	} else {
+		// Note that this lightMult is only affected by LIGHT_DARKEN. If there's no LIGHT_DARKEN, it will be 1.0.
+		float lightMult = CPointLights::GenerateLightsAffectingObject(&GetPosition());
+		if (!bHasBlip && lightMult != 1.0f) {
+			SetAmbientAndDirectionalColours(lightMult);
+			return true;
+		}
+	}
+	return false;
+}
+
+void
+CPed::RemoveLighting(bool reset)
+{
+	CRenderer::RemoveVehiclePedLights(this, reset);
 }
 
 float
@@ -985,8 +1117,20 @@ CRenderer::ScanBigBuildingList(CPtrList &list)
 
 	for(node = list.first; node; node = node->next){
 		ent = (CEntity*)node->item;
-		if(!ent->bZoneCulled && SetupBigBuildingVisibility(ent) == VIS_VISIBLE)
-			ms_aVisibleEntityPtrs[ms_nNoOfVisibleEntities++] = ent;
+#ifndef MASTER
+		// all missing from game actually
+		TestedBigBuildings++;
+#endif
+		if(!ent->bZoneCulled){
+			if(SetupBigBuildingVisibility(ent) == VIS_VISIBLE)
+				ms_aVisibleEntityPtrs[ms_nNoOfVisibleEntities++] = ent;
+#ifndef MASTER
+			EntitiesRendered++;
+			RenderedBigBuildings++;
+		}else{
+			EntitiesNotRendered++;
+#endif
+		}
 	}
 }
 
@@ -1007,7 +1151,7 @@ CRenderer::ScanSectorList(CPtrList *lists)
 				continue;	// already seen
 			ent->m_scanCode = CWorld::GetCurrentScanCode();
 
-			if(IsEntityCullZoneVisible(ent))
+			if(IsEntityCullZoneVisible(ent)){
 				switch(SetupEntityVisibility(ent)){
 				case VIS_VISIBLE:
 					ms_aVisibleEntityPtrs[ms_nNoOfVisibleEntities++] = ent;
@@ -1030,11 +1174,37 @@ CRenderer::ScanSectorList(CPtrList *lists)
 							CStreaming::RequestModel(ent->GetModelIndex(), 0);
 					break;
 				}
-			else if(ent->IsBuilding() && ((CBuilding*)ent)->GetIsATreadable()){
-				if(!CStreaming::ms_disableStreaming)
-					if(SetupEntityVisibility(ent) == VIS_STREAMME)
-						if(!m_loadingPriority || CStreaming::ms_numModelsRequested < 10)
-							CStreaming::RequestModel(ent->GetModelIndex(), 0);
+#ifndef MASTER
+				EntitiesRendered++;
+				switch(ent->GetType()){
+				case ENTITY_TYPE_BUILDING:
+					if(ent->bIsBIGBuilding)
+						RenderedBigBuildings++;
+					else
+						RenderedBuildings++;
+					break;
+				case ENTITY_TYPE_VEHICLE:
+					RenderedCars++;
+					break;
+				case ENTITY_TYPE_PED:
+					RenderedPeds++;
+					break;
+				case ENTITY_TYPE_OBJECT:
+					RenderedObjects++;
+					break;
+				case ENTITY_TYPE_DUMMY:
+					RenderedDummies++;
+					break;
+				}
+#endif
+			}else if(ent->IsBuilding() && ((CBuilding*)ent)->GetIsATreadable() && !CStreaming::ms_disableStreaming){
+				if(SetupEntityVisibility(ent) == VIS_STREAMME)
+					if(!m_loadingPriority || CStreaming::ms_numModelsRequested < 10)
+						CStreaming::RequestModel(ent->GetModelIndex(), 0);
+			}else{
+#ifndef MASTER
+				EntitiesNotRendered++;
+#endif
 			}
 		}
 	}
@@ -1057,7 +1227,7 @@ CRenderer::ScanSectorList_Priority(CPtrList *lists)
 				continue;	// already seen
 			ent->m_scanCode = CWorld::GetCurrentScanCode();
 
-			if(IsEntityCullZoneVisible(ent))
+			if(IsEntityCullZoneVisible(ent)){
 				switch(SetupEntityVisibility(ent)){
 				case VIS_VISIBLE:
 					ms_aVisibleEntityPtrs[ms_nNoOfVisibleEntities++] = ent;
@@ -1082,10 +1252,38 @@ CRenderer::ScanSectorList_Priority(CPtrList *lists)
 					}
 					break;
 				}
-			else if(ent->IsBuilding() && ((CBuilding*)ent)->GetIsATreadable()){
-				if(!CStreaming::ms_disableStreaming)
-					if(SetupEntityVisibility(ent) == VIS_STREAMME)
-						CStreaming::RequestModel(ent->GetModelIndex(), 0);
+#ifndef MASTER
+				// actually missing in game
+				EntitiesRendered++;
+				switch(ent->GetType()){
+				case ENTITY_TYPE_BUILDING:
+					if(ent->bIsBIGBuilding)
+						RenderedBigBuildings++;
+					else
+						RenderedBuildings++;
+					break;
+				case ENTITY_TYPE_VEHICLE:
+					RenderedCars++;
+					break;
+				case ENTITY_TYPE_PED:
+					RenderedPeds++;
+					break;
+				case ENTITY_TYPE_OBJECT:
+					RenderedObjects++;
+					break;
+				case ENTITY_TYPE_DUMMY:
+					RenderedDummies++;
+					break;
+				}
+#endif
+			}else if(ent->IsBuilding() && ((CBuilding*)ent)->GetIsATreadable() && !CStreaming::ms_disableStreaming){
+				if(SetupEntityVisibility(ent) == VIS_STREAMME)
+					CStreaming::RequestModel(ent->GetModelIndex(), 0);
+			}else{
+#ifndef MASTER
+				// actually missing in game
+				EntitiesNotRendered++;
+#endif
 			}
 		}
 	}
@@ -1191,8 +1389,33 @@ CRenderer::IsEntityCullZoneVisible(CEntity *ent)
 	CPed *ped;
 	CObject *obj;
 
+	if(gbDisableZoneCull) return true;
+
+#ifndef MASTER
+	switch(ent->GetType()){
+	case ENTITY_TYPE_BUILDING:
+		if(ent->bIsBIGBuilding)
+			TestedBigBuildings++;
+		else
+			TestedBuildings++;
+		break;
+	case ENTITY_TYPE_VEHICLE:
+		TestedCars++;
+		break;
+	case ENTITY_TYPE_PED:
+		TestedPeds++;
+		break;
+	case ENTITY_TYPE_OBJECT:
+		TestedObjects++;
+		break;
+	case ENTITY_TYPE_DUMMY:
+		TestedDummies++;
+		break;
+	}
+#endif
 	if(ent->bZoneCulled)
 		return false;
+
 
 	switch(ent->GetType()){
 	case ENTITY_TYPE_VEHICLE:
@@ -1208,7 +1431,7 @@ CRenderer::IsEntityCullZoneVisible(CEntity *ent)
 		return !(ped->m_pCurSurface && ped->m_pCurSurface->bZoneCulled2);
 	case ENTITY_TYPE_OBJECT:
 		obj = (CObject*)ent;
-		if(!obj->IsStatic())
+		if(!obj->GetIsStatic())
 			return true;
 		return !(obj->m_pCurSurface && obj->m_pCurSurface->bZoneCulled2);
 	default: break;

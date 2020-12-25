@@ -33,7 +33,7 @@
 
 CColPoint gaTempSphereColPoints[MAX_COLLISION_POINTS];
 
-CPtrList CWorld::ms_bigBuildingsList[4];
+CPtrList CWorld::ms_bigBuildingsList[NUM_LEVELS];
 CPtrList CWorld::ms_listMovingEntityPtrs;
 CSector CWorld::ms_aSectors[NUMSECTORS_Y][NUMSECTORS_X];
 uint16 CWorld::ms_nCurrentScanCode;
@@ -53,6 +53,9 @@ bool CWorld::bIncludeCarTyres;
 void
 CWorld::Initialise()
 {
+#if GTA_VERSION <= GTA3_PS2_160
+	CPools::Initialise();
+#endif
 	pIgnoreEntity = nil;
 	bDoingCarCollisions = false;
 	bSecondShift = false;
@@ -75,7 +78,7 @@ CWorld::Add(CEntity *ent)
 
 	if(ent->IsBuilding() || ent->IsDummy()) return;
 
-	if(!ent->IsStatic()) ((CPhysical *)ent)->AddToMovingList();
+	if(!ent->GetIsStatic()) ((CPhysical *)ent)->AddToMovingList();
 }
 
 void
@@ -90,7 +93,7 @@ CWorld::Remove(CEntity *ent)
 
 	if(ent->IsBuilding() || ent->IsDummy()) return;
 
-	if(!ent->IsStatic()) ((CPhysical *)ent)->RemoveFromMovingList();
+	if(!ent->GetIsStatic()) ((CPhysical *)ent)->RemoveFromMovingList();
 }
 
 void
@@ -919,24 +922,24 @@ CEntity *
 CWorld::TestSphereAgainstSectorList(CPtrList &list, CVector spherePos, float radius, CEntity *entityToIgnore,
                                     bool ignoreSomeObjects)
 {
-	static CColModel sphereCol;
+	static CColModel OurColModel;
 
-	sphereCol.boundingSphere.center.x = 0.0f;
-	sphereCol.boundingSphere.center.y = 0.0f;
-	sphereCol.boundingSphere.center.z = 0.0f;
-	sphereCol.boundingSphere.radius = radius;
-	sphereCol.boundingBox.min.x = -radius;
-	sphereCol.boundingBox.min.y = -radius;
-	sphereCol.boundingBox.min.z = -radius;
-	sphereCol.boundingBox.max.x = radius;
-	sphereCol.boundingBox.max.y = radius;
-	sphereCol.boundingBox.max.z = radius;
-	sphereCol.numSpheres = 1;
-	sphereCol.spheres = &sphereCol.boundingSphere;
-	sphereCol.numLines = 0;
-	sphereCol.numBoxes = 0;
-	sphereCol.numTriangles = 0;
-	sphereCol.ownsCollisionVolumes = false;
+	OurColModel.boundingSphere.center.x = 0.0f;
+	OurColModel.boundingSphere.center.y = 0.0f;
+	OurColModel.boundingSphere.center.z = 0.0f;
+	OurColModel.boundingSphere.radius = radius;
+	OurColModel.boundingBox.min.x = -radius;
+	OurColModel.boundingBox.min.y = -radius;
+	OurColModel.boundingBox.min.z = -radius;
+	OurColModel.boundingBox.max.x = radius;
+	OurColModel.boundingBox.max.y = radius;
+	OurColModel.boundingBox.max.z = radius;
+	OurColModel.numSpheres = 1;
+	OurColModel.spheres = &OurColModel.boundingSphere;
+	OurColModel.numLines = 0;
+	OurColModel.numBoxes = 0;
+	OurColModel.numTriangles = 0;
+	OurColModel.ownsCollisionVolumes = false;
 
 	CMatrix sphereMat;
 	sphereMat.SetTranslate(spherePos);
@@ -959,7 +962,7 @@ CWorld::TestSphereAgainstSectorList(CPtrList &list, CVector spherePos, float rad
 				if(e->GetBoundRadius() + radius > distance) {
 					CColModel *eCol = CModelInfo::GetModelInfo(e->GetModelIndex())->GetColModel();
 					int collidedSpheres =
-					    CCollision::ProcessColModels(sphereMat, sphereCol, e->GetMatrix(), *eCol,
+					    CCollision::ProcessColModels(sphereMat, OurColModel, e->GetMatrix(), *eCol,
 					                                 gaTempSphereColPoints, nil, nil);
 
 					if(collidedSpheres != 0 ||
@@ -1358,102 +1361,6 @@ CWorld::FindMissionEntitiesIntersectingCubeSectorList(CPtrList &list, const CVec
 	}
 }
 
-CPlayerPed *
-FindPlayerPed(void)
-{
-	return CWorld::Players[CWorld::PlayerInFocus].m_pPed;
-}
-
-CVehicle *
-FindPlayerVehicle(void)
-{
-	CPlayerPed *ped = FindPlayerPed();
-	if(ped && ped->InVehicle()) return ped->m_pMyVehicle;
-	return nil;
-}
-
-CVehicle *
-FindPlayerTrain(void)
-{
-	if(FindPlayerVehicle() && FindPlayerVehicle()->IsTrain())
-		return FindPlayerVehicle();
-	else
-		return nil;
-}
-
-CEntity *
-FindPlayerEntity(void)
-{
-	CPlayerPed *ped = FindPlayerPed();
-	if(ped->InVehicle())
-		return ped->m_pMyVehicle;
-	else
-		return ped;
-}
-
-CVector
-FindPlayerCoors(void)
-{
-#ifdef FIX_BUGS
-	if (CReplay::IsPlayingBack())
-		return TheCamera.GetPosition();
-#endif
-	CPlayerPed *ped = FindPlayerPed();
-	if(ped->InVehicle())
-		return ped->m_pMyVehicle->GetPosition();
-	else
-		return ped->GetPosition();
-}
-
-CVector &
-FindPlayerSpeed(void)
-{
-#ifdef FIX_BUGS
-	static CVector vecTmpVector(0.0f, 0.0f, 0.0f);
-	if (CReplay::IsPlayingBack())
-		return vecTmpVector;
-#endif
-	CPlayerPed *ped = FindPlayerPed();
-	if(ped->InVehicle())
-		return ped->m_pMyVehicle->m_vecMoveSpeed;
-	else
-		return ped->m_vecMoveSpeed;
-}
-
-const CVector &
-FindPlayerCentreOfWorld(int32 player)
-{
-#ifdef FIX_BUGS
-	if(CReplay::IsPlayingBack()) return TheCamera.GetPosition();
-#endif
-	if(CCarCtrl::bCarsGeneratedAroundCamera) return TheCamera.GetPosition();
-	if(CWorld::Players[player].m_pRemoteVehicle) return CWorld::Players[player].m_pRemoteVehicle->GetPosition();
-	if(FindPlayerVehicle()) return FindPlayerVehicle()->GetPosition();
-	return CWorld::Players[player].m_pPed->GetPosition();
-}
-
-const CVector &
-FindPlayerCentreOfWorld_NoSniperShift(void)
-{
-#ifdef FIX_BUGS
-	if (CReplay::IsPlayingBack()) return TheCamera.GetPosition();
-#endif
-	if(CCarCtrl::bCarsGeneratedAroundCamera) return TheCamera.GetPosition();
-	if(CWorld::Players[CWorld::PlayerInFocus].m_pRemoteVehicle)
-		return CWorld::Players[CWorld::PlayerInFocus].m_pRemoteVehicle->GetPosition();
-	if(FindPlayerVehicle()) return FindPlayerVehicle()->GetPosition();
-	return FindPlayerPed()->GetPosition();
-}
-
-float
-FindPlayerHeading(void)
-{
-	if(CWorld::Players[CWorld::PlayerInFocus].m_pRemoteVehicle)
-		return CWorld::Players[CWorld::PlayerInFocus].m_pRemoteVehicle->GetForward().Heading();
-	if(FindPlayerVehicle()) return FindPlayerVehicle()->GetForward().Heading();
-	return FindPlayerPed()->GetForward().Heading();
-}
-
 void
 CWorld::ClearCarsFromArea(float x1, float y1, float z1, float x2, float y2, float z2)
 {
@@ -1534,7 +1441,7 @@ CWorld::CallOffChaseForAreaSectorListVehicles(CPtrList &list, float x1, float y1
 		if(pVehicle->m_scanCode != GetCurrentScanCode()) {
 			pVehicle->m_scanCode = GetCurrentScanCode();
 			const CVector &vehiclePos = pVehicle->GetPosition();
-			eCarMission carMission = pVehicle->AutoPilot.m_nCarMission;
+			uint8 carMission = pVehicle->AutoPilot.m_nCarMission;
 			if(pVehicle != FindPlayerVehicle() && vehiclePos.x > fStartX && vehiclePos.x < fEndX &&
 			   vehiclePos.y > fStartY && vehiclePos.y < fEndY && pVehicle->bIsLawEnforcer &&
 			   (carMission == MISSION_RAMPLAYER_FARAWAY || carMission == MISSION_RAMPLAYER_CLOSE ||
@@ -1735,21 +1642,29 @@ CWorld::ShutDown(void)
 			CWorld::Remove(pEntity);
 			delete pEntity;
 		}
+#ifndef FIX_BUGS
 		pSector->m_lists[ENTITYLIST_BUILDINGS].Flush();
 		pSector->m_lists[ENTITYLIST_BUILDINGS_OVERLAP].Flush();
 		pSector->m_lists[ENTITYLIST_DUMMIES].Flush();
 		pSector->m_lists[ENTITYLIST_DUMMIES_OVERLAP].Flush();
+#endif
 	}
-	for(int32 i = 0; i < 4; i++) {
-		for(CPtrNode *pNode = GetBigBuildingList((eLevelName)i).first; pNode; pNode = pNode->next) {
+	for(int32 i = 0; i < NUM_LEVELS; i++) {
+		for(CPtrNode *pNode = ms_bigBuildingsList[i].first; pNode; pNode = pNode->next) {
 			CEntity *pEntity = (CEntity *)pNode->item;
 			// Maybe remove from world here?
 			delete pEntity;
 		}
-		GetBigBuildingList((eLevelName)i).Flush();
+		ms_bigBuildingsList[i].Flush();
 	}
 	for(int i = 0; i < NUMSECTORS_X * NUMSECTORS_Y; i++) {
 		CSector *pSector = GetSector(i % NUMSECTORS_X, i / NUMSECTORS_Y);
+#ifdef FIX_BUGS
+		pSector->m_lists[ENTITYLIST_BUILDINGS].Flush();
+		pSector->m_lists[ENTITYLIST_BUILDINGS_OVERLAP].Flush();
+		pSector->m_lists[ENTITYLIST_DUMMIES].Flush();
+		pSector->m_lists[ENTITYLIST_DUMMIES_OVERLAP].Flush();
+#endif
 		if(pSector->m_lists[ENTITYLIST_BUILDINGS].first) {
 			sprintf(gString, "Building list %d,%d not empty\n", i % NUMSECTORS_X, i / NUMSECTORS_Y);
 			pSector->m_lists[ENTITYLIST_BUILDINGS].Flush();
@@ -1780,6 +1695,9 @@ CWorld::ShutDown(void)
 		}
 	}
 	ms_listMovingEntityPtrs.Flush();
+#if GTA_VERSION <= GTA3_PS2_160
+	CPools::Shutdown();
+#endif
 }
 
 void
@@ -1941,12 +1859,11 @@ CWorld::Process(void)
 	} else {
 		for(CPtrNode *node = ms_listMovingEntityPtrs.first; node; node = node->next) {
 			CEntity *movingEnt = (CEntity *)node->item;
-#ifdef SQUEEZE_PERFORMANCE
-			if (movingEnt->bRemoveFromWorld) {
-				RemoveEntityInsteadOfProcessingIt(movingEnt);
-			} else
-#endif
+#ifdef FIX_BUGS // from VC
+			if(!movingEnt->bRemoveFromWorld && movingEnt->m_rwObject && RwObjectGetType(movingEnt->m_rwObject) == rpCLUMP &&
+#else
 			if(movingEnt->m_rwObject && RwObjectGetType(movingEnt->m_rwObject) == rpCLUMP &&
+#endif
 			   RpAnimBlendClumpGetFirstAssociation(movingEnt->GetClump())) {
 				RpAnimBlendClumpUpdateAnimations(movingEnt->GetClump(),
 				                                 0.02f * (movingEnt->IsObject()
@@ -1960,7 +1877,7 @@ CWorld::Process(void)
 				RemoveEntityInsteadOfProcessingIt(movingEnt);
 			} else {
 				movingEnt->ProcessControl();
-				if(movingEnt->IsStatic()) { movingEnt->RemoveFromMovingList(); }
+				if(movingEnt->GetIsStatic()) { movingEnt->RemoveFromMovingList(); }
 			}
 		}
 		bForceProcessControl = true;
@@ -1971,7 +1888,7 @@ CWorld::Process(void)
 					RemoveEntityInsteadOfProcessingIt(movingEnt);
 				} else {
 					movingEnt->ProcessControl();
-					if(movingEnt->IsStatic()) { movingEnt->RemoveFromMovingList(); }
+					if(movingEnt->GetIsStatic()) { movingEnt->RemoveFromMovingList(); }
 				}
 			}
 		}
@@ -2124,13 +2041,13 @@ CWorld::TriggerExplosionSectorList(CPtrList &list, const CVector &position, floa
 			CObject *pObject = (CObject *)pEntity;
 			CVehicle *pVehicle = (CVehicle *)pEntity;
 			if(!pEntity->bExplosionProof && (!pEntity->IsPed() || !pPed->bInVehicle)) {
-				if(pEntity->IsStatic()) {
+				if(pEntity->GetIsStatic()) {
 					if(pEntity->IsObject()) {
 						if (fPower > pObject->m_fUprootLimit || IsFence(pObject->GetModelIndex())) {
 							if (IsGlass(pObject->GetModelIndex())) {
 								CGlass::WindowRespondsToExplosion(pObject, position);
 							} else {
-								pObject->bIsStatic = false;
+								pObject->SetIsStatic(false);
 								pObject->AddToMovingList();
 								int16 modelId = pEntity->GetModelIndex();
 								if(modelId != MI_FIRE_HYDRANT ||
@@ -2148,18 +2065,18 @@ CWorld::TriggerExplosionSectorList(CPtrList &list, const CVector &position, floa
 								}
 							}
 						}
-						if(pEntity->IsStatic()) {
+						if(pEntity->GetIsStatic()) {
 							float fDamageMultiplier =
 							    (fRadius - fMagnitude) * 2.0f / fRadius;
 							float fDamage = 300.0f * Min(fDamageMultiplier, 1.0f);
 							pObject->ObjectDamage(fDamage);
 						}
 					} else {
-						pEntity->bIsStatic = false;
+						pEntity->SetIsStatic(false);
 						pEntity->AddToMovingList();
 					}
 				}
-				if(!pEntity->IsStatic()) {
+				if(!pEntity->GetIsStatic()) {
 					float fDamageMultiplier = Min((fRadius - fMagnitude) * 2.0f / fRadius, 1.0f);
 					CVector vecForceDir =
 					    vecDistance * (fPower * pEntity->m_fMass * 0.00071429f * fDamageMultiplier /

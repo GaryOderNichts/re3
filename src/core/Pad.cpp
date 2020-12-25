@@ -59,6 +59,9 @@ bool CPad::bDisplayNoControllerMessage;
 bool CPad::bObsoleteControllerMessage;
 bool CPad::bOldDisplayNoControllerMessage;
 bool CPad::m_bMapPadOneToPadTwo;
+#ifdef INVERT_LOOK_FOR_PAD
+bool CPad::bInvertLook4Pad;
+#endif
 #ifdef GTA_PS2
 unsigned char act_direct[6];
 unsigned char act_align[6];
@@ -938,7 +941,7 @@ void CPad::AddToPCCheatString(char c)
 	if ( !_CHEATCMP("GNIROOOOOB") )
 		SlowTimeCheat();
 
-#ifndef GTA3_1_1_PATCH
+#if GTA_VERSION < GTA3_PC_11
 	// "TURTOISE"
 	if ( !_CHEATCMP("ESIOTRUT") )
 		ArmourCheat();
@@ -1285,7 +1288,7 @@ void CPad::Update(int16 pad)
 		{
 			if ( ShakeDur )
 			{
-				ShakeDur = Max(ShakeDur - CTimer::GetTimeStepInMilliseconds(), 0);
+				ShakeDur = Max(ShakeDur - (int32)CTimer::GetTimeStepInMilliseconds(), 0);
 
 				if ( ShakeDur == 0 )
 				{
@@ -2403,7 +2406,7 @@ bool CPad::GetAnaloguePadLeftJustUp(void)
 
 	if ( X == 0 && oldfStickX < 0 )
 	{
-		oldfStickX = X;
+		oldfStickX = 0;
 
 		return true;
 	}
@@ -2423,7 +2426,7 @@ bool CPad::GetAnaloguePadRightJustUp(void)
 
 	if ( X == 0 && oldfStickX > 0 )
 	{
-		oldfStickX = X;
+		oldfStickX = 0;
 
 		return true;
 	}
@@ -2538,10 +2541,20 @@ int16 CPad::SniperModeLookLeftRight(void)
 int16 CPad::SniperModeLookUpDown(void)
 {
 	int16 axis = NewState.LeftStickY;
+	int16 dpad;
 #ifdef FIX_BUGS
 	axis = -axis;
 #endif
-	int16 dpad = (NewState.DPadUp - NewState.DPadDown) / 2;
+#ifndef INVERT_LOOK_FOR_PAD
+	dpad = (NewState.DPadUp - NewState.DPadDown) / 2;
+#else
+	if (CPad::bInvertLook4Pad) {
+		axis = -axis;
+		dpad = (NewState.DPadDown - NewState.DPadUp) / 2;
+	} else {
+		dpad = (NewState.DPadUp - NewState.DPadDown) / 2;
+	}
+#endif
 
 	if ( Abs(axis) > Abs(dpad) )
 		return axis;
@@ -2571,6 +2584,10 @@ int16 CPad::LookAroundUpDown(void)
 #ifdef FIX_BUGS
 	axis = -axis;
 #endif
+#ifdef INVERT_LOOK_FOR_PAD
+	if (CPad::bInvertLook4Pad)
+		axis = -axis;
+#endif
 
 	if ( Abs(axis) > 85 && !GetLookBehindForPed() )
 		return (int16) ( (axis + ( ( axis > 0 ) ? -85 : 85) )
@@ -2594,10 +2611,18 @@ void CPad::PrintErrorMessage(void)
 {
 	if ( bDisplayNoControllerMessage && !CGame::playingIntro && !FrontEndMenuManager.m_bMenuActive )
 	{
+#ifdef FIX_BUGS
+		CFont::SetScale(SCREEN_SCALE_X(0.85f), SCREEN_SCALE_Y(1.0f));
+#else
 		CFont::SetScale(0.85f, 1.0f);
+#endif
 		CFont::SetJustifyOff();
 		CFont::SetBackgroundOff();
+#ifdef FIX_BUGS
+		CFont::SetCentreSize(SCREEN_SCALE_X(DEFAULT_SCREEN_WIDTH - 20));
+#else
 		CFont::SetCentreSize(SCREEN_WIDTH - 20);
+#endif
 		CFont::SetCentreOn();
 		CFont::SetPropOn();
 		CFont::SetColor(CRGBA(255, 255, 200, 200));
@@ -2611,10 +2636,18 @@ void CPad::PrintErrorMessage(void)
 	}
 	else if ( bObsoleteControllerMessage )
 	{
+#ifdef FIX_BUGS
+		CFont::SetScale(SCREEN_SCALE_X(0.85f), SCREEN_SCALE_Y(1.0f));
+#else
 		CFont::SetScale(0.85f, 1.0f);
+#endif
 		CFont::SetJustifyOff();
 		CFont::SetBackgroundOff();
+#ifdef FIX_BUGS
+		CFont::SetCentreSize(SCREEN_SCALE_X(DEFAULT_SCREEN_WIDTH - 20));
+#else
 		CFont::SetCentreSize(SCREEN_WIDTH - 20);
+#endif
 		CFont::SetCentreOn();
 		CFont::SetPropOn();
 		CFont::SetColor(CRGBA(255, 255, 200, 200));

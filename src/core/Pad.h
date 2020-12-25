@@ -170,6 +170,9 @@ public:
 	static bool bObsoleteControllerMessage;
 	static bool bOldDisplayNoControllerMessage;
 	static bool m_bMapPadOneToPadTwo;
+#ifdef INVERT_LOOK_FOR_PAD
+	static bool bInvertLook4Pad;
+#endif
 	
 	static CKeyboardState OldKeyState;
 	static CKeyboardState NewKeyState;
@@ -277,6 +280,8 @@ public:
 	bool GetMiddleMouseJustUp() { return !!(!NewMouseControllerState.MMB && OldMouseControllerState.MMB); }
 	bool GetMouseWheelUpJustUp() { return !!(!NewMouseControllerState.WHEELUP && OldMouseControllerState.WHEELUP); }
 	bool GetMouseWheelDownJustUp() { return !!(!NewMouseControllerState.WHEELDN && OldMouseControllerState.WHEELDN); }
+	bool GetMouseX1JustUp() { return !!(!NewMouseControllerState.MXB1 && OldMouseControllerState.MXB1); }
+	bool GetMouseX2JustUp() { return !!(!NewMouseControllerState.MXB2 && OldMouseControllerState.MXB2); }
 
 	bool GetLeftMouse()         { return NewMouseControllerState.LMB; }
 	bool GetRightMouse()        { return NewMouseControllerState.RMB; }

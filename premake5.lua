@@ -20,6 +20,11 @@ newoption {
 }
 
 newoption {
+	trigger     = "with-asan",
+	description = "Build with address sanitizer"
+}
+
+newoption {
 	trigger     = "with-librw",
 	description = "Build and use librw from this solution"
 }
@@ -60,6 +65,11 @@ workspace "re3"
 	symbols "Full"
 	staticruntime "off"
 
+	if _OPTIONS["with-asan"] then
+		buildoptions { "-fsanitize=address -g3 -fno-omit-frame-pointer" }
+		linkoptions { "-fsanitize=address" }
+	end
+
 	filter { "system:windows" }
 		platforms {
 			"win-x86-RW33_d3d8-mss",
@@ -82,7 +92,16 @@ workspace "re3"
 
 	filter { "system:bsd" }
 		platforms {
-			"bsd-amd64-librw_gl3_glfw-oal"
+			"bsd-x86-librw_gl3_glfw-oal",
+			"bsd-amd64-librw_gl3_glfw-oal",
+			"bsd-arm-librw_gl3_glfw-oal",
+			"bsd-arm64-librw_gl3_glfw-oal"
+		}
+
+	filter { "system:macosx" }
+		platforms {
+			"macosx-arm64-librw_gl3_glfw-oal",
+			"macosx-amd64-librw_gl3_glfw-oal",
 		}
 
 	filter "configurations:Debug"
@@ -100,15 +119,26 @@ workspace "re3"
 		
 	filter { "platforms:bsd*" }
 		system "bsd"
+
+	filter { "platforms:macosx*" }
+		system "macosx"
 	
 	filter { "platforms:*x86*" }
 		architecture "x86"
+		floatingpoint "Fast"
 		
 	filter { "platforms:*amd64*" }
 		architecture "amd64"
+		floatingpoint "Fast"
 
 	filter { "platforms:*arm*" }
 		architecture "ARM"
+
+	filter { "platforms:macosx-arm64-*" }
+		buildoptions { "-target", "arm64-apple-macos11", "-std=gnu++14" }
+
+	filter { "platforms:macosx-amd64-*" }
+		buildoptions { "-target", "x86_64-apple-macos10.12", "-std=gnu++14" }
 
 	filter { "platforms:*librw_d3d9*" }
 		defines { "RW_D3D9" }
@@ -159,9 +189,31 @@ project "librw"
 	files { path.join(Librw, "src/*.*") }
 	files { path.join(Librw, "src/*/*.*") }
 	
+	filter { "platforms:*x86*" }
+		architecture "x86"
+		floatingpoint "Fast"
+
+	filter { "platforms:*amd64*" }
+		architecture "amd64"
+		floatingpoint "Fast"
+
+	filter "platforms:win*"
+		staticruntime "on"
+		buildoptions { "/Zc:sizedDealloc-" }
+
 	filter "platforms:bsd*"
 		includedirs { "/usr/local/include" }
 		libdirs { "/usr/local/lib" }
+
+	filter "platforms:macosx*"
+		-- Support MacPorts and Homebrew
+		includedirs { "/opt/local/include" }
+		includedirs {"/usr/local/include" }
+		libdirs { "/opt/local/lib" }
+		libdirs { "/usr/local/lib" }
+
+	filter "platforms:*gl3_glfw*"
+		staticruntime "off"
 	
 	filter "platforms:*RW33*"
 		flags { "ExcludeFromBuild" }
@@ -182,6 +234,8 @@ project "re3"
 	files { addSrcFiles("src/audio") }
 	files { addSrcFiles("src/audio/eax") }
 	files { addSrcFiles("src/audio/oal") }
+	files { addSrcFiles("src/buildings") }
+	files { addSrcFiles("src/collision") }
 	files { addSrcFiles("src/control") }
 	files { addSrcFiles("src/core") }
 	files { addSrcFiles("src/entities") }
@@ -204,6 +258,8 @@ project "re3"
 	includedirs { "src/audio" }
 	includedirs { "src/audio/eax" }
 	includedirs { "src/audio/oal" }
+	includedirs { "src/buildings" }
+	includedirs { "src/collision" }
 	includedirs { "src/control" }
 	includedirs { "src/core" }
 	includedirs { "src/entities" }
@@ -252,9 +308,17 @@ project "re3"
 	filter "platforms:win*"
 		files { addSrcFiles("src/skel/win") }
 		includedirs { "src/skel/win" }
+		buildoptions { "/Zc:sizedDealloc-" }
 		linkoptions "/SAFESEH:NO"
 		characterset ("MBCS")
 		targetextension ".exe"
+		if(_OPTIONS["with-librw"]) then
+			-- external librw is dynamic
+			staticruntime "on"
+		end
+
+	filter "platforms:win*glfw*"
+		staticruntime "off"
 		
 	filter "platforms:win*oal"
 		includedirs { "vendor/openal-soft/include" }
@@ -276,6 +340,11 @@ project "re3"
 		
 	filter "platforms:bsd*oal"
 		links { "openal", "mpg123", "sndfile", "pthread" }
+
+	filter "platforms:macosx*oal"
+		links { "openal", "mpg123", "sndfile", "pthread" }
+		includedirs { "/usr/local/opt/openal-soft/include" }
+		libdirs { "/usr/local/opt/openal-soft/lib" }
 	
 	if _OPTIONS["with-opus"] then
 		filter {}
@@ -285,7 +354,6 @@ project "re3"
 	end
 
 	filter "platforms:*RW33*"
-		staticruntime "on"
 		includedirs { "sdk/rwsdk/include/d3d8" }
 		libdirs { "sdk/rwsdk/lib/d3d8/release" }
 		links { "rwcore", "rpworld", "rpmatfx", "rpskin", "rphanim", "rtbmp", "rtquat", "rtcharse" }
@@ -303,14 +371,12 @@ project "re3"
 		links { "rw" }
 
 	filter "platforms:*d3d9*"
+		defines { "USE_D3D9" }
 		links { "d3d9" }
 		
 	filter "platforms:*x86*d3d*"
 		includedirs { "sdk/dx8sdk/include" }
 		libdirs { "sdk/dx8sdk/lib" }
-
-	filter "platforms:*amd64*d3d9*"
-		defines { "USE_D3D9" }
 		
 	filter "platforms:win-x86*gl3_glfw*"
 		libdirs { path.join(_OPTIONS["glewdir"], "lib/Release/Win32") }
@@ -328,4 +394,12 @@ project "re3"
 	filter "platforms:bsd*gl3_glfw*"
 		links { "GL", "GLEW", "glfw", "sysinfo" }
 		includedirs { "/usr/local/include" }
+		libdirs { "/usr/local/lib" }
+
+	filter "platforms:macosx*gl3_glfw*"
+		links { "GLEW", "glfw" }
+		linkoptions { "-framework OpenGL" }
+		includedirs { "/opt/local/include" }
+		includedirs { "/usr/local/include" }
+		libdirs { "/opt/local/lib" }
 		libdirs { "/usr/local/lib" }

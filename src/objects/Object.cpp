@@ -91,7 +91,7 @@ CObject::ProcessControl(void)
 	CPhysical::ProcessControl();
 	if (mod_Buoyancy.ProcessBuoyancy(this, m_fBuoyancy, &point, &impulse)) {
 		bIsInWater = true;
-		bIsStatic = false;
+		SetIsStatic(false);
 		ApplyMoveForce(impulse);
 		ApplyTurnForce(impulse, point);
 		float fTimeStep = Pow(0.97f, CTimer::GetTimeStep());
@@ -182,7 +182,7 @@ CObject::ObjectDamage(float amount)
 		case DAMAGE_EFFECT_SMASH_COMPLETELY:
 			bIsVisible = false;
 			bUsesCollision = false;
-			bIsStatic = true;
+			SetIsStatic(true);
 			bExplosionProof = true;
 			SetMoveSpeed(0.0f, 0.0f, 0.0f);
 			SetTurnSpeed(0.0f, 0.0f, 0.0f);
@@ -194,7 +194,7 @@ CObject::ObjectDamage(float amount)
 			else {
 				bIsVisible = false;
 				bUsesCollision = false;
-				bIsStatic = true;
+				SetIsStatic(true);
 				bExplosionProof = true;
 				SetMoveSpeed(0.0f, 0.0f, 0.0f);
 				SetTurnSpeed(0.0f, 0.0f, 0.0f);
@@ -203,21 +203,21 @@ CObject::ObjectDamage(float amount)
 		case DAMAGE_EFFECT_SMASH_CARDBOARD_COMPLETELY: {
 			bIsVisible = false;
 			bUsesCollision = false;
-			bIsStatic = true;
+			SetIsStatic(true);
 			bExplosionProof = true;
 			SetMoveSpeed(0.0f, 0.0f, 0.0f);
 			SetTurnSpeed(0.0f, 0.0f, 0.0f);
 			const RwRGBA color = { 96, 48, 0, 255 };
 			for (int32 i = 0; i < 25; i++) {
-				CVector vecDir(CGeneral::GetRandomNumberInRange(-0.35f, 0.7f),
-					CGeneral::GetRandomNumberInRange(-0.35f, 0.7f),
-					CGeneral::GetRandomNumberInRange(0.1f, 0.15f) + fDirectionZ);
+				CVector vecDir(CGeneral::GetRandomNumberInRange(-0.35f, 0.35f),
+					CGeneral::GetRandomNumberInRange(-0.35f, 0.35f),
+					CGeneral::GetRandomNumberInRange(0.1f, 0.25f) + fDirectionZ);
 				++nFrameGen;
 				int32 currentFrame = nFrameGen & 3;
 				float fRandom = CGeneral::GetRandomNumberInRange(0.01f, 1.0f);
 				RwRGBA randomColor = { uint8(color.red * fRandom), uint8(color.green * fRandom) , color.blue, color.alpha };
-				float fSize = CGeneral::GetRandomNumberInRange(0.02f, 0.18f);
-				int32 nRotationSpeed = CGeneral::GetRandomNumberInRange(-40, 80);
+				float fSize = CGeneral::GetRandomNumberInRange(0.02f, 0.20f);
+				int32 nRotationSpeed = CGeneral::GetRandomNumberInRange(-40, 40);
 				CParticle::AddParticle(PARTICLE_CAR_DEBRIS, vecPos, vecDir, nil, fSize, randomColor, nRotationSpeed, 0, currentFrame, 0);
 			}
 			PlayOneShotScriptObject(SCRIPT_SOUND_BOX_DESTROYED_2, vecPos);
@@ -226,21 +226,21 @@ CObject::ObjectDamage(float amount)
 		case DAMAGE_EFFECT_SMASH_WOODENBOX_COMPLETELY: {
 			bIsVisible = false;
 			bUsesCollision = false;
-			bIsStatic = true;
+			SetIsStatic(true);
 			bExplosionProof = true;
 			SetMoveSpeed(0.0f, 0.0f, 0.0f);
 			SetTurnSpeed(0.0f, 0.0f, 0.0f);
 			const RwRGBA color = { 128, 128, 128, 255 };
 			for (int32 i = 0; i < 45; i++) {
-				CVector vecDir(CGeneral::GetRandomNumberInRange(-0.35f, 0.7f),
-					CGeneral::GetRandomNumberInRange(-0.35f, 0.7f),
-					CGeneral::GetRandomNumberInRange(0.1f, 0.15f) + fDirectionZ);
+				CVector vecDir(CGeneral::GetRandomNumberInRange(-0.35f, 0.35f),
+					CGeneral::GetRandomNumberInRange(-0.35f, 0.35f),
+					CGeneral::GetRandomNumberInRange(0.1f, 0.25f) + fDirectionZ);
 				++nFrameGen;
 				int32 currentFrame = nFrameGen & 3;
-				float fRandom = CGeneral::GetRandomNumberInRange(0.5f, 0.5f);
+				float fRandom = CGeneral::GetRandomNumberInRange(0.5f, 1.0f);
 				RwRGBA randomColor = { uint8(color.red * fRandom), uint8(color.green * fRandom), uint8(color.blue * fRandom), color.alpha };
-				float fSize = CGeneral::GetRandomNumberInRange(0.02f, 0.18f);
-				int32 nRotationSpeed = CGeneral::GetRandomNumberInRange(-40, 80);
+				float fSize = CGeneral::GetRandomNumberInRange(0.02f, 0.20f);
+				int32 nRotationSpeed = CGeneral::GetRandomNumberInRange(-40, 40);
 				CParticle::AddParticle(PARTICLE_CAR_DEBRIS, vecPos, vecDir, nil, fSize, randomColor, nRotationSpeed, 0, currentFrame, 0);
 			}
 			PlayOneShotScriptObject(SCRIPT_SOUND_BOX_DESTROYED_1, vecPos);
@@ -249,23 +249,23 @@ CObject::ObjectDamage(float amount)
 		case DAMAGE_EFFECT_SMASH_TRAFFICCONE_COMPLETELY: {
 			bIsVisible = false;
 			bUsesCollision = false;
-			bIsStatic = true;
+			SetIsStatic(true);
 			bExplosionProof = true;
 			SetMoveSpeed(0.0f, 0.0f, 0.0f);
 			SetTurnSpeed(0.0f, 0.0f, 0.0f);
 			const RwRGBA color1 = { 200, 0, 0, 255 };
 			const RwRGBA color2 = { 200, 200, 200, 255 };
 			for (int32 i = 0; i < 10; i++) {
-				CVector vecDir(CGeneral::GetRandomNumberInRange(-0.35f, 0.7f),
-					CGeneral::GetRandomNumberInRange(-0.35f, 0.7f),
-					CGeneral::GetRandomNumberInRange(0.1f, 0.15f) + fDirectionZ);
+				CVector vecDir(CGeneral::GetRandomNumberInRange(-0.35f, 0.35f),
+					CGeneral::GetRandomNumberInRange(-0.35f, 0.35f),
+					CGeneral::GetRandomNumberInRange(0.1f, 0.25f) + fDirectionZ);
 				++nFrameGen;
 				int32 currentFrame = nFrameGen & 3;
 				RwRGBA color = color2;
 				if (nFrameGen & 1)
 					color = color1;
-				float fSize = CGeneral::GetRandomNumberInRange(0.02f, 0.18f);
-				int32 nRotationSpeed = CGeneral::GetRandomNumberInRange(-40, 80);
+				float fSize = CGeneral::GetRandomNumberInRange(0.02f, 0.20f);
+				int32 nRotationSpeed = CGeneral::GetRandomNumberInRange(-40, 40);
 				CParticle::AddParticle(PARTICLE_CAR_DEBRIS, vecPos, vecDir, nil, fSize, color, nRotationSpeed, 0, currentFrame, 0);
 			}
 			PlayOneShotScriptObject(SCRIPT_SOUND_TIRE_COLLISION, vecPos);
@@ -274,23 +274,23 @@ CObject::ObjectDamage(float amount)
 		case DAMAGE_EFFECT_SMASH_BARPOST_COMPLETELY: {
 			bIsVisible = false;
 			bUsesCollision = false;
-			bIsStatic = true;
+			SetIsStatic(true);
 			bExplosionProof = true;
 			SetMoveSpeed(0.0f, 0.0f, 0.0f);
 			SetTurnSpeed(0.0f, 0.0f, 0.0f);
 			const RwRGBA color1 = { 200, 0, 0, 255 };
 			const RwRGBA color2 = { 200, 200, 200, 255 };
 			for (int32 i = 0; i < 32; i++) {
-				CVector vecDir(CGeneral::GetRandomNumberInRange(-0.35f, 0.7f),
-					CGeneral::GetRandomNumberInRange(-0.35f, 0.7f),
-					CGeneral::GetRandomNumberInRange(0.1f, 0.15f) + fDirectionZ);
+				CVector vecDir(CGeneral::GetRandomNumberInRange(-0.35f, 0.35f),
+					CGeneral::GetRandomNumberInRange(-0.35f, 0.35f),
+					CGeneral::GetRandomNumberInRange(0.1f, 0.25f) + fDirectionZ);
 				++nFrameGen;
 				int32 currentFrame = nFrameGen & 3;
 				RwRGBA color = color2;
 				if (nFrameGen & 1)
 					color = color1;
-				float fSize = CGeneral::GetRandomNumberInRange(0.02f, 0.18f);
-				int32 nRotationSpeed = CGeneral::GetRandomNumberInRange(-40, 80);
+				float fSize = CGeneral::GetRandomNumberInRange(0.02f, 0.20f);
+				int32 nRotationSpeed = CGeneral::GetRandomNumberInRange(-40, 40);
 				CParticle::AddParticle(PARTICLE_CAR_DEBRIS, vecPos, vecDir, nil, fSize, color, nRotationSpeed, 0, currentFrame, 0);
 			}
 			PlayOneShotScriptObject(SCRIPT_SOUND_METAL_COLLISION, vecPos);
@@ -314,7 +314,7 @@ CObject::Init(void)
 	CObjectData::SetObjectData(GetModelIndex(), *this);
 	m_nEndOfLifeTime = 0;
 	ObjectCreatedBy = GAME_OBJECT;
-	bIsStatic = true;
+	SetIsStatic(true);
 	bIsPickup = false;
 	bPickupObjWithMessage = false;
 	bOutOfStock = false;
@@ -389,7 +389,7 @@ CObject::DeleteAllTempObjectsInArea(CVector point, float fRadius)
 	CObjectPool *objectPool = CPools::GetObjectPool();
 	for (int32 i = 0; i < objectPool->GetSize(); i++) {
 		CObject *pObject = objectPool->GetSlot(i);
-		if (pObject && pObject->ObjectCreatedBy == TEMP_OBJECT && fRadius * fRadius > pObject->GetPosition().MagnitudeSqr()) {
+		if (pObject && pObject->ObjectCreatedBy == TEMP_OBJECT && (point - pObject->GetPosition()).MagnitudeSqr() < SQR(fRadius)) {
 			CWorld::Remove(pObject);
 			delete pObject;
 		}

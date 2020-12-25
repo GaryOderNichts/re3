@@ -52,7 +52,7 @@ CHeli::CHeli(int32 id, uint8 CreatedBy)
 
 	CVehicleModelInfo *mi = (CVehicleModelInfo*)CModelInfo::GetModelInfo(id);
 	m_vehType = VEHICLE_TYPE_HELI;
-	pHandling = mod_HandlingManager.GetHandlingData((eHandlingId)mi->m_handlingId);
+	pHandling = mod_HandlingManager.GetHandlingData((tVehicleType)mi->m_handlingId);
 	SetModelIndex(id);
 	m_heliStatus = HELI_STATUS_HOVER;
 	m_pathState = 0;
@@ -726,7 +726,7 @@ CHeli::SpawnFlyingComponent(int32 component)
 	obj->m_fElasticity = 0.1f;
 	obj->m_fBuoyancy = obj->m_fMass*GRAVITY/0.75f;
 	obj->ObjectCreatedBy = TEMP_OBJECT;
-	obj->bIsStatic = false;
+	obj->SetIsStatic(false);
 	obj->bIsPickup = false;
 
 	// life time
@@ -778,8 +778,10 @@ CHeli::InitHelis(void)
 	for(i = 0; i < NUM_HELIS; i++)
 		pHelis[i] = nil;
 
+#if GTA_VERSION >= GTA3_PS2_160
 	((CVehicleModelInfo*)CModelInfo::GetModelInfo(MI_ESCAPE))->SetColModel(&CTempColModels::ms_colModelPed1);
 	((CVehicleModelInfo*)CModelInfo::GetModelInfo(MI_CHOPPER))->SetColModel(&CTempColModels::ms_colModelPed1);
+#endif
 }
 
 CHeli*
@@ -788,6 +790,13 @@ GenerateHeli(bool catalina)
 	CHeli *heli;
 	CVector heliPos;
 	int i;
+
+#if GTA_VERSION < GTA3_PS2_160
+	if(catalina)
+		((CVehicleModelInfo*)CModelInfo::GetModelInfo(MI_ESCAPE))->SetColModel(&CTempColModels::ms_colModelPed1);
+	else
+		((CVehicleModelInfo*)CModelInfo::GetModelInfo(MI_CHOPPER))->SetColModel(&CTempColModels::ms_colModelPed1);
+#endif
 
 	if(catalina)
 		heli = new CHeli(MI_ESCAPE, PERMANENT_VEHICLE);

@@ -108,10 +108,17 @@ CWeapon::Fire(CEntity *shooter, CVector *fireSource)
 	CVector fireOffset(0.0f, 0.0f, 0.6f);
 	CVector *source = fireSource;
 
-	if (!fireSource) {
+	if (!fireSource)
+	{
+		fireOffset = shooter->GetMatrix() * fireOffset;
+#ifdef FIX_BUGS
 		static CVector tmp;
-		tmp = shooter->GetMatrix() * fireOffset;
+		tmp = fireOffset;
 		source = &tmp;
+#else
+		source = &fireOffset;
+#endif
+		
 	}
 	if ( m_bAddRotOffset )
 	{
@@ -378,7 +385,7 @@ CWeapon::FireMelee(CEntity *shooter, CVector &fireSource)
 			if ( victimPed->bUsesCollision || victimPed->Dead() || victimPed->Driving() )
 			{
 				CVector victimPedPos = victimPed->GetPosition();
-				if ( SQR(victimPedRadius) > (victimPedPos-(*fireSource)).MagnitudeSqr() )
+				if ( SQR(victimPedRadius) > (victimPedPos-fireSource).MagnitudeSqr() )
 				{
 					CVector collisionDist;
 
@@ -386,7 +393,7 @@ CWeapon::FireMelee(CEntity *shooter, CVector &fireSource)
 					while ( s < victimPedCol->numSpheres )
 					{
 						CColSphere *sphere = &victimPedCol->spheres[s];
-						collisionDist = victimPedPos+sphere->center-(*fireSource);
+						collisionDist = victimPedPos+sphere->center-fireSource;
 
 						if ( SQR(sphere->radius + info->m_fRadius) > collisionDist.MagnitudeSqr() )
 						{
@@ -1057,13 +1064,13 @@ CWeapon::DoBulletImpact(CEntity *shooter, CEntity *victim,
 
 					if ( !victimObject->bInfiniteMass )
 					{
-						if ( victimObject->IsStatic() && victimObject->m_fUprootLimit <= 0.0f )
+						if ( victimObject->GetIsStatic() && victimObject->m_fUprootLimit <= 0.0f )
 						{
-							victimObject->bIsStatic = false;
+							victimObject->SetIsStatic(false);
 							victimObject->AddToMovingList();
 						}
 
-						if ( !victimObject->IsStatic())
+						if ( !victimObject->GetIsStatic())
 						{
 							CVector moveForce = point->normal*-4.0f;
 							victimObject->ApplyMoveForce(moveForce.x, moveForce.y, moveForce.z);
@@ -1166,6 +1173,7 @@ CWeapon::FireShotgun(CEntity *shooter, CVector *fireSource)
 	{
 		float shootAngle = DEGTORAD(7.5f*i + shooterAngle - 15.0f);
 		CVector2D shootRot(-Sin(shootAngle), Cos(shootAngle));
+		shootRot.Normalise();
 
 		CVector source, target;
 		CColPoint point;
@@ -1316,13 +1324,13 @@ CWeapon::FireShotgun(CEntity *shooter, CVector *fireSource)
 
 							if ( !victimObject->bInfiniteMass )
 							{
-								if ( victimObject->IsStatic() && victimObject->m_fUprootLimit <= 0.0f )
+								if ( victimObject->GetIsStatic() && victimObject->m_fUprootLimit <= 0.0f )
 								{
-									victimObject->bIsStatic = false;
+									victimObject->SetIsStatic(false);
 									victimObject->AddToMovingList();
 								}
 
-								if ( !victimObject->IsStatic())
+								if ( !victimObject->GetIsStatic())
 								{
 									CVector moveForce = point.normal*-5.0f;
 									victimObject->ApplyMoveForce(moveForce.x, moveForce.y, moveForce.z);
@@ -2258,9 +2266,9 @@ CWeapon::BlowUpExplosiveThings(CEntity *thing)
 			object->m_vecMoveSpeed.x += float((CGeneral::GetRandomNumber()&255) - 128) * 0.0002f;
 			object->m_vecMoveSpeed.y += float((CGeneral::GetRandomNumber()&255) - 128) * 0.0002f;
 
-			if ( object->IsStatic())
+			if ( object->GetIsStatic())
 			{
-				object->bIsStatic = false;
+				object->SetIsStatic(false);
 				object->AddToMovingList();
 			}
 		}
@@ -2277,6 +2285,16 @@ CWeapon::HasWeaponAmmoToBeUsed(void)
 		default:
 			return m_nAmmoTotal != 0;
 	}
+}
+
+bool
+CPed::IsPedDoingDriveByShooting(void)
+{
+	if (FindPlayerPed() == this && GetWeapon()->m_eWeaponType == WEAPONTYPE_UZI) {
+		if (TheCamera.Cams[TheCamera.ActiveCam].LookingLeft || TheCamera.Cams[TheCamera.ActiveCam].LookingRight)
+			return true;
+	}
+	return false;
 }
 
 bool

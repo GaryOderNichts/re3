@@ -290,18 +290,18 @@ CVehicle::FlyingControl(eFlightModel flightModel)
 	case FLIGHT_MODEL_SEAPLANE:
 	{
 		// thrust
+		float fThrust = flightModel == FLIGHT_MODEL_RCPLANE ? fRCAeroThrust : fSeaThrust;
+		float fThrustFallOff = flightModel == FLIGHT_MODEL_RCPLANE ? fRCPropFallOff : fSeaPropFallOff;
+		
 		float fForwSpeed = DotProduct(GetMoveSpeed(), GetForward());
 		CVector vecTail = GetColModel()->boundingBox.min.y * GetForward();
-		float fThrust = (CPad::GetPad(0)->GetAccelerate() - CPad::GetPad(0)->GetBrake()) / 255.0f;
+		float fPedalState = (CPad::GetPad(0)->GetAccelerate() - CPad::GetPad(0)->GetBrake()) / 255.0f;
 		if (fForwSpeed > 0.1f || (flightModel == FLIGHT_MODEL_RCPLANE && fForwSpeed > 0.02f))
-			fThrust += 1.0f;
-		else if (fForwSpeed > 0.0f && fThrust < 0.0f)
-			fThrust = 0.0f;
-		float fThrustAccel;
-		if (flightModel == FLIGHT_MODEL_RCPLANE)
-			fThrustAccel = (fThrust - fRCPropFallOff * fForwSpeed) * fRCAeroThrust;
-		else
-			fThrustAccel = (fThrust - fSeaPropFallOff * fForwSpeed) * fSeaThrust;
+			fPedalState += 1.0f;
+		else if (fForwSpeed > 0.0f && fPedalState < 0.0f)
+			fPedalState = 0.0f;
+		float fThrustAccel = (fPedalState - fThrustFallOff * fForwSpeed) * fThrust;
+			
 		ApplyMoveForce(fThrustAccel * GetForward() * m_fMass * CTimer::GetTimeStep());
 
 		// left/right
@@ -353,12 +353,12 @@ CVehicle::FlyingControl(eFlightModel flightModel)
 			fPitchAccel = fSeaTailMult * fTail * Abs(fTail) + fSeaPitchMult * fSteerUD * fForwSpeed;
 		ApplyTurnForce(fPitchAccel * m_fTurnMass * GetUp() * CTimer::GetTimeStep(), vecTail);
 
-		float fLift = -DotProduct(GetMoveSpeed(), GetUp()) / Max(0.01f, GetMoveSpeed().Magnitude());
+		float fLift = DotProduct(GetMoveSpeed(), GetUp()) / Max(0.01f, GetMoveSpeed().Magnitude()); //accel*angle
 		float fLiftAccel;
 		if (flightModel == FLIGHT_MODEL_RCPLANE)
-			fLiftAccel = (fRCAttackLiftMult * fLift + fRCFormLiftMult) * fForwSpeed * fForwSpeed;
+			fLiftAccel = (fRCFormLiftMult - fRCAttackLiftMult * fLift) * SQR(fForwSpeed);
 		else
-			fLiftAccel = (fSeaAttackLiftMult * fLift + fSeaFormLiftMult) * fForwSpeed * fForwSpeed;
+			fLiftAccel = (fSeaFormLiftMult - fSeaAttackLiftMult * fLift) * SQR(fForwSpeed);
 		float fLiftImpulse = fLiftAccel * m_fMass * CTimer::GetTimeStep();
 		if (GRAVITY * CTimer::GetTimeStep() * m_fMass < fLiftImpulse) {
 			if (flightModel == FLIGHT_MODEL_RCPLANE && GetPosition().z > 50.0f)
@@ -405,7 +405,7 @@ CVehicle::FlyingControl(eFlightModel flightModel)
 		else
 			fThrust = fThrustVar * (CPad::GetPad(0)->GetAccelerate() - 2 * CPad::GetPad(0)->GetBrake()) / 255.0f + 0.95f;
 		fThrust -= fRotorFallOff * DotProduct(m_vecMoveSpeed, GetUp());
-#ifdef GTA3_1_1_PATCH
+#if GTA_VERSION >= GTA3_PC_11
 		if (fThrust > 0.9f && GetPosition().z > 80.0f)
 			fThrust = 0.9f;
 #endif
@@ -582,6 +582,13 @@ CVehicle::ProcessWheel(CVector &wheelFwd, CVector &wheelRight, CVector &wheelCon
 	}
 }
 
+void
+CVehicle::ProcessBikeWheel(CVector &wheelFwd, CVector &wheelRight, CVector &wheelContactSpeed, CVector &wheelContactPoint, int32 wheelsOnGround, float thrust,
+                           float brake, float adhesion, int8 wheelId, float *wheelSpeed, tWheelState *wheelState, eBikeWheelSpecial special, uint16 wheelStatus)
+{
+	// TODO: mobile code
+}
+
 float
 CVehicle::ProcessWheelRotation(tWheelState state, const CVector &fwd, const CVector &speed, float radius)
 {
@@ -706,7 +713,7 @@ CVehicle::InflictDamage(CEntity* damagedBy, eWeaponType weaponType, float damage
 		}
 	}
 #ifdef FIX_BUGS // removing dumb case when shooting police car in player's own garage gives wanted level
-	if (GetModelIndex() == MI_POLICE && damagedBy == FindPlayerPed() && !bHasBeenOwnedByPlayer)
+	if (GetModelIndex() == MI_POLICE && damagedBy == FindPlayerPed() && damagedBy != nil && !bHasBeenOwnedByPlayer)
 #else
 	if (GetModelIndex() == MI_POLICE && damagedBy == FindPlayerPed())
 #endif
@@ -1164,7 +1171,10 @@ CVehicle::AddPassenger(CPed *passenger, uint8 n)
 void
 CVehicle::RemoveDriver(void)
 {
-	SetStatus(STATUS_ABANDONED);
+#ifdef FIX_BUGS
+	if (GetStatus() != STATUS_WRECKED)
+#endif
+		SetStatus(STATUS_ABANDONED);
 	pDriver = nil;
 }
 

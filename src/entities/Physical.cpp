@@ -341,7 +341,7 @@ CPhysical::ProcessEntityCollision(CEntity *ent, CColPoint *colpoints)
 		AddCollisionRecord(ent);
 		if(!ent->IsBuilding())	// Can't this catch dummies too?
 			((CPhysical*)ent)->AddCollisionRecord(this);
-		if(ent->IsBuilding() || ent->IsStatic())
+		if(ent->IsBuilding() || ent->GetIsStatic())
 			this->bHasHitWall = true;
 	}
 	return numSpheres;
@@ -377,7 +377,7 @@ CPhysical::ProcessControl(void)
 				m_nStaticFrames++;
 				if(m_nStaticFrames > 10){
 					m_nStaticFrames = 10;
-					bIsStatic = true;
+					SetIsStatic(true);
 					m_vecMoveSpeed = CVector(0.0f, 0.0f, 0.0f);
 					m_vecTurnSpeed = CVector(0.0f, 0.0f, 0.0f);
 					m_vecMoveFriction = m_vecMoveSpeed;
@@ -556,7 +556,7 @@ CPhysical::ApplyCollision(CPhysical *B, CColPoint &colpoint, float &impulseA, fl
 		massFactorB = B->bIsHeavy ? 2.0f : 1.0f;
 
 	float speedA, speedB;
-	if(B->IsStatic()){
+	if(B->GetIsStatic()){
 		if(A->bPedPhysics){
 			speedA = DotProduct(A->m_vecMoveSpeed, colpoint.normal);
 			if(speedA < 0.0f){
@@ -567,16 +567,16 @@ CPhysical::ApplyCollision(CPhysical *B, CColPoint &colpoint, float &impulseA, fl
 						if(IsGlass(B->GetModelIndex()))
 							CGlass::WindowRespondsToCollision(B, impulseA, A->m_vecMoveSpeed, colpoint.point, false);
 						else if(!B->bInfiniteMass)
-							B->bIsStatic = false;
+							B->SetIsStatic(false);
 					}else{
 						if(IsGlass(B->GetModelIndex()))
 							CGlass::WindowRespondsToSoftCollision(B, impulseA);
 						if(!A->bInfiniteMass)
-							A->ApplyMoveForce(colpoint.normal*(1.0f + A->m_fElasticity)*impulseA);
+							A->ApplyMoveForce(colpoint.GetNormal() * (1.0f + A->m_fElasticity) * impulseA);
 						return true;
 					}
 				}else if(!B->bInfiniteMass)
-					B->bIsStatic = false;
+					B->SetIsStatic(false);
 	
 				if(B->bInfiniteMass){
 					impulseA = -speedA * A->m_fMass;
@@ -614,7 +614,7 @@ CPhysical::ApplyCollision(CPhysical *B, CColPoint &colpoint, float &impulseA, fl
 						if(IsGlass(B->GetModelIndex()))
 							CGlass::WindowRespondsToCollision(B, impulseA, A->m_vecMoveSpeed, colpoint.point, false);
 						else
-							B->bIsStatic = false;
+							B->SetIsStatic(false);
 						int16 model = B->GetModelIndex();
 						if(model == MI_FIRE_HYDRANT && !Bobj->bHasBeenDamaged){
 							CParticleObject::AddObject(POBJECT_FIRE_HYDRANT, B->GetPosition() - CVector(0.0f, 0.0f, 0.5f), true);
@@ -624,7 +624,7 @@ CPhysical::ApplyCollision(CPhysical *B, CColPoint &colpoint, float &impulseA, fl
 					}else{
 						if(IsGlass(B->GetModelIndex()))
 							CGlass::WindowRespondsToSoftCollision(B, impulseA);
-						CVector f = colpoint.normal * impulseA;
+						CVector f = colpoint.GetNormal() * impulseA;
 						if(A->IsVehicle() && colpoint.normal.z < 0.7f)
 							f.z *= 0.3f;
 						if(!A->bInfiniteMass){
@@ -635,11 +635,11 @@ CPhysical::ApplyCollision(CPhysical *B, CColPoint &colpoint, float &impulseA, fl
 						return true;
 					}
 				}else if(!B->bInfiniteMass)
-					B->bIsStatic = false;
+					B->SetIsStatic(false);
 			}
 		}
 	
-		if(B->IsStatic())
+		if(B->GetIsStatic())
 			return false;
 		if(!B->bInfiniteMass)
 			B->AddToMovingList();
@@ -824,7 +824,7 @@ CPhysical::ApplyCollisionAlt(CEntity *B, CColPoint &colpoint, float &impulse, CV
 		normalSpeed = DotProduct(speed, colpoint.normal);
 		if(normalSpeed < 0.0f){
 			float minspeed = 1.3f*GRAVITY * CTimer::GetTimeStep();
-#ifdef GTA3_1_1_PATCH
+#if GTA_VERSION >= GTA3_PC_11
 			if ((IsObject() || IsVehicle() && (GetUp().z < -0.3f || ((CVehicle*)this)->IsBike() && (GetStatus() == STATUS_ABANDONED || GetStatus() == STATUS_WRECKED))) &&
 #else
 			if((IsObject() || IsVehicle() && GetUp().z < -0.3f) &&
@@ -1074,7 +1074,7 @@ CPhysical::ProcessShiftSectorList(CPtrList *lists)
 				canshift = true;
 			else
 				canshift = A->IsPed() &&
-					B->IsObject() && B->bIsStatic && !Bobj->bHasBeenDamaged;
+					B->IsObject() && B->GetIsStatic() && !Bobj->bHasBeenDamaged;
 			if(B == A ||
 			   B->m_scanCode == CWorld::GetCurrentScanCode() ||
 			   !B->bUsesCollision ||
@@ -1098,7 +1098,7 @@ CPhysical::ProcessShiftSectorList(CPtrList *lists)
 				CObject *Aobj = (CObject*)A;
 				if(Aobj->ObjectCreatedBy != TEMP_OBJECT &&
 				   !Aobj->bHasBeenDamaged &&
-				   Aobj->IsStatic()){
+				   Aobj->GetIsStatic()){
 					if(Aobj->m_pCollidingEntity == B)
 						Aobj->m_pCollidingEntity = nil;
 				}else if(Aobj->m_pCollidingEntity != B){
@@ -1115,7 +1115,7 @@ CPhysical::ProcessShiftSectorList(CPtrList *lists)
 				CObject *Bobj = (CObject*)B;
 				if(Bobj->ObjectCreatedBy != TEMP_OBJECT &&
 				   !Bobj->bHasBeenDamaged &&
-				   Bobj->IsStatic()){
+				   Bobj->GetIsStatic()){
 					if(Bobj->m_pCollidingEntity == A)
 						Bobj->m_pCollidingEntity = nil;
 				}else if(Bobj->m_pCollidingEntity != A){
@@ -1146,43 +1146,43 @@ CPhysical::ProcessShiftSectorList(CPtrList *lists)
 
 			mostColliding = 0;
 			for(j = 1; j < numCollisions; j++)
-				if(colpoints[j].depth > colpoints[mostColliding].depth)
+				if (colpoints[j].GetDepth() > colpoints[mostColliding].GetDepth())
 					mostColliding = j;
 
 			if(CWorld::bSecondShift)
 				for(j = 0; j < numCollisions; j++)
-					shift += colpoints[j].normal * colpoints[j].depth * 1.5f/numCollisions;
+					shift += colpoints[j].GetNormal() * colpoints[j].GetDepth() * 1.5f / numCollisions;
 			else
 				for(j = 0; j < numCollisions; j++)
-					shift += colpoints[j].normal * colpoints[j].depth * 1.2f/numCollisions;
+					shift += colpoints[j].GetNormal() * colpoints[j].GetDepth() * 1.2f / numCollisions;
 
 			if(A->IsVehicle() && B->IsVehicle()){
 				CVector dir = A->GetPosition() - B->GetPosition();
 				dir.Normalise();
 				if(dir.z < 0.0f && dir.z < A->GetForward().z && dir.z < A->GetRight().z)
 					dir.z = Min(0.0f, Min(A->GetForward().z, A->GetRight().z));
-				shift += dir * colpoints[mostColliding].depth * 0.5f;
+				shift += dir * colpoints[mostColliding].GetDepth() * 0.5f;
 			}else if(A->IsPed() && B->IsVehicle() && ((CVehicle*)B)->IsBoat()){
-				CVector dir = colpoints[mostColliding].normal;
+				CVector dir = colpoints[mostColliding].GetNormal();
 				float f = Min(Abs(dir.z), 0.9f);
 				dir.z = 0.0f;
 				dir.Normalise();
-				shift += dir * colpoints[mostColliding].depth / (1.0f - f);
+				shift += dir * colpoints[mostColliding].GetDepth() / (1.0f - f);
 				boat = B;
 			}else if(B->IsPed() && A->IsVehicle() && ((CVehicle*)A)->IsBoat()){
-				CVector dir = colpoints[mostColliding].normal * -1.0f;
+				CVector dir = colpoints[mostColliding].GetNormal() * -1.0f;
 				float f = Min(Abs(dir.z), 0.9f);
 				dir.z = 0.0f;
 				dir.Normalise();
-				B->GetMatrix().Translate(dir * colpoints[mostColliding].depth / (1.0f - f));
+				B->GetMatrix().Translate(dir * colpoints[mostColliding].GetDepth() / (1.0f - f));
 				// BUG? how can that ever happen? A is a Ped
 				if(B->IsVehicle())
 					B->ProcessEntityCollision(A, colpoints);
 			}else{
 				if(CWorld::bSecondShift)
-					shift += colpoints[mostColliding].normal * colpoints[mostColliding].depth * 0.4f;
+					shift += colpoints[mostColliding].GetNormal() * colpoints[mostColliding].GetDepth() * 0.4f;
 				else
-					shift += colpoints[mostColliding].normal * colpoints[mostColliding].depth * 0.2f;
+					shift += colpoints[mostColliding].GetNormal() * colpoints[mostColliding].GetDepth() * 0.2f;
 			}
 
 			doShift = true;
@@ -1433,7 +1433,7 @@ CPhysical::ProcessCollisionSectorList(CPtrList *lists)
 					skipCollision = true;
 				else if(Aobj->ObjectCreatedBy == TEMP_OBJECT ||
 				   Aobj->bHasBeenDamaged ||
-				   !Aobj->IsStatic()){
+				   !Aobj->GetIsStatic()){
 					if(Aobj->m_pCollidingEntity == B)
 						skipCollision = true;
 					else{
@@ -1452,7 +1452,7 @@ CPhysical::ProcessCollisionSectorList(CPtrList *lists)
 					skipCollision = true;
 				else if(Bobj->ObjectCreatedBy == TEMP_OBJECT ||
 				   Bobj->bHasBeenDamaged ||
-				   !Bobj->IsStatic()){
+				   !Bobj->GetIsStatic()){
 					if(Bobj->m_pCollidingEntity == A)
 						skipCollision = true;
 					else{

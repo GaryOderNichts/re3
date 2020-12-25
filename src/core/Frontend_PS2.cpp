@@ -22,7 +22,7 @@
 #include "Game.h"
 #include "World.h"
 #include "PlayerInfo.h"
-#include "FrontendControls.h"
+#include "FrontEndControls.h"
 #include "MemoryCard.h"
 
 #define CRect_SZ(x, y, w, h) CRect(x, y, x+w, y+h)
@@ -43,7 +43,7 @@ void DoRWStuffEndOfFrame(void);
 #define X SCREEN_SCALE_X
 #define Y SCREEN_SCALE_Y
 
-#define YF(x) Y(float(x)*(float(DEFAULT_SCREEN_HEIGHT)/float(DEFAULT_SCREEN_HEIGHT_PAL)))
+#define YF(x) Y(float(x)*(float(DEFAULT_SCREEN_HEIGHT)/float(SCREEN_HEIGHT_PAL)))
 //#define X(x) ((x)/640.0f*SCRW)
 //#define Y(y) ((y)/448.0f*SCRH)
 
@@ -202,20 +202,6 @@ static const char* FrontendFilenames[][2] =
 	{"fe_radio8",         "" },
 	{"fe_radio9",         "" },
 };
-
-#ifdef CUTSCENE_BORDERS_SWITCH
-bool CMenuManager::m_PrefsCutsceneBorders = true;
-#endif
-
-#ifdef MULTISAMPLING
-int8 CMenuManager::m_nPrefsMSAALevel = 0;
-int8 CMenuManager::m_nDisplayMSAALevel = 0;
-#endif
-
-#ifdef NO_ISLAND_LOADING
-int8 CMenuManager::m_DisplayIslandLoading = ISLAND_LOADING_LOW;
-int8 CMenuManager::m_PrefsIslandLoading = ISLAND_LOADING_LOW;
-#endif
 
 int32 CMenuManager::m_PrefsSfxVolume = 102;
 int32 CMenuManager::m_PrefsMusicVolume = 102;
