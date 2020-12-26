@@ -213,7 +213,11 @@ CFileLoader::LoadCollisionFile(const char *filename)
 	fd = CFileMgr::OpenFile(filename, "rb");
 
 	while(CFileMgr::Read(fd, (char*)&header, sizeof(header))){
-		assert(strncmp(header.ident, "COLL", 4) == 0);
+#ifdef BIGENDIAN
+		assert(header.ident == 'COLL');
+#else
+		assert(header.ident == 'LLOC');
+#endif
 #ifdef BIGENDIAN
 		header.size = BSWAP32(header.size);
 #endif

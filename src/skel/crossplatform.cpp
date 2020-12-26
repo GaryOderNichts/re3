@@ -38,7 +38,7 @@ HANDLE FindFirstFile(const char* pathname, WIN32_FIND_DATA* firstfile) {
 	
 	// Case-sensitivity and backslashes...
 	// Will be freed at the bottom
-	char *realFolder = casepath(folder);
+	char *realFolder = casepath(folder, false);
 	if (realFolder) {
 		folder = realFolder;
 	}

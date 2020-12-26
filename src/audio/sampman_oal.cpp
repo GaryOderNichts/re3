@@ -47,6 +47,8 @@
 #include <direct.h>
 #include <shobjidl.h>
 #include <shlguid.h>
+#elif defined __WIIU__
+extern "C" char *_getcwd (char *__buf, size_t __size);
 #else
 #define _getcwd getcwd
 #endif
@@ -502,6 +504,8 @@ _ResolveLink(char const *path, char *out)
 	}
 	
 	return false;
+#elif defined __WIIU__
+	return false;
 #else
 	struct stat sb;
 
@@ -542,7 +546,7 @@ _FindMP3s(void)
 	int total_ms;
 	WIN32_FIND_DATA fd;
 	
-	if (getcwd(_mp3DirectoryPath, MAX_PATH) == NULL) {
+	if (_getcwd(_mp3DirectoryPath, MAX_PATH) == NULL) {
 		perror("getcwd: ");
 		return;
 	}

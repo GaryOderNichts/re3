@@ -34,6 +34,7 @@
 #include "Sprite2d.h"
 #include "AnimViewer.h"
 #include "Font.h"
+#include "MemoryMgr.h"
 
 #include <stddef.h>
 #include <locale.h>
@@ -74,7 +75,7 @@ void _psCreateFolder(const char *path)
 	char fullpath[PATH_MAX];
 	realpath(path, fullpath);
 
-	if (lstat(fullpath, &info) != 0) {
+	if (stat(fullpath, &info) != 0) {
 		if (errno == ENOENT || (errno != EACCES && !S_ISDIR(info.st_mode))) {
 			mkdir(fullpath, 0755);
 		}
@@ -168,7 +169,11 @@ psMouseSetPos(RwV2d *pos)
 RwMemoryFunctions*
 psGetMemoryFunctions(void)
 {
+#ifdef USE_CUSTOM_ALLOCATOR
+	return &memFuncs;
+#else
 	return nil;
+#endif
 }
 
 /*
@@ -196,8 +201,6 @@ psNativeTextureSupport(void)
 RwBool
 psInitialize(void)
 {
-	WHBLogPrintf("psInitialize");
-	
 	PsGlobal.lastMousePos.x = PsGlobal.lastMousePos.y = 0.0f;
 
 	RsGlobal.ps = &PsGlobal;
@@ -208,7 +211,6 @@ psInitialize(void)
 	PsGlobal.joy1id	= -1;
 	PsGlobal.joy2id	= -1;
 
-	WHBLogPrintf("Initializing CFileMgr");
 	CFileMgr::Initialise();
 	
 #ifdef PS2_MENU
@@ -261,36 +263,31 @@ psInitialize(void)
 
 	TheMemoryCard.Init();
 #else
-	WHBLogPrintf("Setting save dir");
 	C_PcSave::SetSaveDirectory(_psGetUserFilesFolder());
 	
-	WHBLogPrintf("Initializing language");
 	InitialiseLanguage();
 
-#ifndef GTA3_1_1_PATCH
+#if GTA_VERSION < GTA3_PC_11
 	FrontEndMenuManager.LoadSettings();
 #endif
 
 #endif
 	
-	WHBLogPrintf("gGameState = GS_START_UP");
 	gGameState = GS_START_UP;
 	TRACE("gGameState = GS_START_UP");
 	
+	_dwOperatingSystemVersion = OS_WINXP;
+
 #ifndef PS2_MENU
 
-#ifdef GTA3_1_1_PATCH
+#if GTA_VERSION < GTA3_PC_11
 	FrontEndMenuManager.LoadSettings();
 #endif
 
 #endif
-    // TODO: Is there a way to get free ram on wiiu?
 
-	_dwMemAvailPhys = 1024*1024*170; //systemInfo.freeram;
-	_dwOperatingSystemVersion = OS_WINXP; // To fool other classes
-
-	// debug("Physical memory size %u\n", systemInfo.totalram);
-	// debug("Available physical memory %u\n", systemInfo.freeram);
+	// memory required to have all vehicles loaded
+	_dwMemAvailPhys = 1024*1024*170;
 
 	TheText.Unload();
 
@@ -414,18 +411,15 @@ psSelectDevice()
 	RwVideoMode			vm;
 	RwInt32				subSysNum;
 	RwInt32				AutoRenderer = 0;
-	
-	WHBLogPrintf("psSelectDevice");
 
 	RwBool modeFound = FALSE;
 	
 	if ( !useDefault )
 	{
-		WHBLogPrintf("Not using default");
+
 		GnumSubSystems = RwEngineGetNumSubSystems();
 		if ( !GnumSubSystems )
 		{
-			WHBLogPrintf("no subsystems");
 			 return FALSE;
 		}
 		
@@ -438,7 +432,6 @@ psSelectDevice()
 			RwEngineGetSubSystemInfo(&GsubSysInfo[subSysNum], subSysNum);
 		}
 		
-		WHBLogPrintf("RwEngineGetCurrentSubSystem");
 		/* Get the default selection */
 		GcurSel = RwEngineGetCurrentSubSystem();
 #ifdef IMPROVED_VIDEOMODE
@@ -450,7 +443,6 @@ psSelectDevice()
 	/* Set the driver to use the correct sub system */
 	if (!RwEngineSetSubSystem(GcurSel))
 	{
-		WHBLogPrintf("cannot set subsystem %d", GcurSel);
 		return FALSE;
 	}
 
@@ -575,7 +567,6 @@ psSelectDevice()
 	* dimensions to match */
 	if (!RwEngineSetVideoMode(GcurSelVM))
 	{
-		WHBLogPrintf("Cannot set video mode");
 		return FALSE;
 	}
 	/*
@@ -630,23 +621,8 @@ long _InputInitialiseMouse()
 
 void psPostRWinit(void)
 {
-	RwVideoMode vm;
-	RwEngineGetVideoModeInfo(&vm, GcurSelVM);
-
-    // TODO: wiiu
-
-	// glfwSetKeyCallback(PSGLOBAL(window), keypressCB);
-	// glfwSetWindowSizeCallback(PSGLOBAL(window), resizeCB);
-	// glfwSetScrollCallback(PSGLOBAL(window), scrollCB);
-	// glfwSetCursorPosCallback(PSGLOBAL(window), cursorCB);
-	// glfwSetCursorEnterCallback(PSGLOBAL(window), cursorEnterCB);
-	// glfwSetJoystickCallback(joysChangeCB);
-
 	_InputInitialiseJoys();
 	_InputInitialiseMouse();
-
-	// if(!(vm.flags & rwVIDEOMODEEXCLUSIVE))
-	// 	glfwSetWindowSize(PSGLOBAL(window), RsGlobal.maximumWidth, RsGlobal.maximumHeight);
 
 	// Make sure all keys are released
 	CPad::GetPad(0)->Clear(true);
@@ -693,7 +669,7 @@ RwBool _psSetVideoMode(RwInt32 subSystem, RwInt32 videoMode)
 void InitialiseLanguage()
 {
 
-    // TODO: wiiu get system language
+	// TODO: wiiu get system language
 	// Mandatory for Linux(Unix? Posix?) to set lang. to environment lang.
 	setlocale(LC_ALL, "");	
 
@@ -875,9 +851,12 @@ main(int argc, char *argv[])
 	RwV2d pos;
 	RwInt32 i;
 
-    WHBProcInit();
+#ifdef USE_CUSTOM_ALLOCATOR
+	InitMemoryMgr();
+#endif
+
+	WHBProcInit();
 	WHBInitCrashHandler();
-    WHBMountSdCard();
 
 	WHBLogUdpInit();
 
@@ -899,7 +878,6 @@ main(int argc, char *argv[])
 		return FALSE;
 	}
 
-	WHBLogPrintf("RE3 Wii U initialized");
 
 	// for(i=1; i<argc; i++)
 	// {
@@ -913,8 +891,8 @@ main(int argc, char *argv[])
 	openParams.width = RsGlobal.maximumWidth;
 	openParams.height = RsGlobal.maximumHeight;
 	openParams.windowtitle = RsGlobal.appName;
-	// TODO wiiu openParams.window = &PSGLOBAL(window);
-	
+	openParams.window = nil;
+
 	ControlsManager.MakeControllerActionsBlank();
 	ControlsManager.InitDefaultControlConfiguration();
 
@@ -924,32 +902,18 @@ main(int argc, char *argv[])
 	if( rsEVENTERROR == RsEventHandler(rsRWINITIALIZE, &openParams) )
 	{
 		RsEventHandler(rsTERMINATE, nil);
-		WHBLogPrintf("Cannot initialize RenderWare\n");
+		WHBLogPrintf("Cannot initialize RenderWare");
 		WHBProcShutdown();
 		return 0;
 	}
 
-	WHBLogPrintf("RenderWare Initialized");
 
 	psPostRWinit();
 
-	WHBLogPrintf("Renderware post init done");
 
 	ControlsManager.InitDefaultControlConfigMouse(MousePointerStateHelper.GetMouseSetUp());
 
-	WHBLogPrintf("mouse initialized");
 
-    // TODO Wii U
-//	glfwSetWindowPos(PSGLOBAL(window), 0, 0);
-
-	// /* 
-	//  * Parse command line parameters (except program name) one at 
-	//  * a time AFTER RenderWare initialization...
-	//  */
-	// for(i=1; i<argc; i++)
-	// {
-	// 	RsEventHandler(rsCOMMANDLINE, argv[i]);
-	// }
 
 	/* 
 	 * Force a camera resize event...
@@ -965,7 +929,6 @@ main(int argc, char *argv[])
 		RsEventHandler(rsCAMERASIZE, &r);
 	}
 
-	WHBLogPrintf("camera resized");
 
 	{
 		CFileMgr::SetDirMyDocuments();
@@ -981,7 +944,6 @@ main(int argc, char *argv[])
 		CFileMgr::SetDir("");
 	}
 
-	WHBLogPrintf("set loaded");
 
 #ifdef PS2_MENU
 	int32 r = TheMemoryCard.CheckCardStateAtGameStartUp(CARD_ONE);
@@ -999,21 +961,8 @@ main(int argc, char *argv[])
 	}
 #endif
 
-	if (TurnOnAnimViewer)
-	{
-#ifndef MASTER
-		CAnimViewer::Initialise();
-#ifndef PS2_MENU
-		FrontEndMenuManager.m_bGameNotLoaded = false;
-#endif
-		gGameState = GS_ANIMVIEWER;
-		TurnOnAnimViewer = false;
-#endif
-	}
 
-	WHBLogPrintf("animviewer initialized");
-
-    // main loop
+	// main loop
 	while ( TRUE )
 	{
 		RwInitialised = TRUE;
@@ -1030,6 +979,18 @@ main(int argc, char *argv[])
 		* Enter the message processing loop...
 		*/
 
+#ifndef MASTER
+		if (gbModelViewer) {
+			// This is TheModelViewer in LCS, but not compiled on III Mobile.
+			LoadingScreen("Loading the ModelViewer", NULL, GetRandomSplashScreen());
+			CAnimViewer::Initialise();
+			CTimer::Update();
+#ifndef PS2_MENU
+			FrontEndMenuManager.m_bGameNotLoaded = false;
+#endif
+		}
+#endif
+
 #ifdef PS2_MENU
 		if (TheMemoryCard.m_bWantToLoad)
 			LoadSplash(GetLevelSplashScreen(CGame::currLevel));
@@ -1043,13 +1004,18 @@ main(int argc, char *argv[])
 		while( !RsGlobal.quit && !FrontEndMenuManager.m_bWantToRestart && WHBProcIsRunning())
 #endif
 		{
-			if( ForegroundApp )
+#ifndef MASTER
+			if (gbModelViewer) {
+				// This is TheModelViewerCore in LCS, but TheModelViewer on other state-machine III-VCs.
+				TheModelViewer();
+			} else
+#endif
+			if ( ForegroundApp )
 			{
 				switch ( gGameState )
 				{
 					case GS_START_UP:
 					{
-						WHBLogPrintf("GS_START_UP");
 #ifdef NO_MOVIES
 						gGameState = GS_INIT_ONCE;
 #else
@@ -1059,23 +1025,21 @@ main(int argc, char *argv[])
 						break;
 					}
 
-				    case GS_INIT_LOGO_MPEG:
+					case GS_INIT_LOGO_MPEG:
 					{
-						WHBLogPrintf("GS_INIT_LOGO_MPEG");
-					    //if (!startupDeactivate)
+						//if (!startupDeactivate)
 						//    PlayMovieInWindow(cmdShow, "movies\\Logo.mpg");
-					    gGameState = GS_LOGO_MPEG;
-					    TRACE("gGameState = GS_LOGO_MPEG;");
-					    break;
-				    }
+						gGameState = GS_LOGO_MPEG;
+						TRACE("gGameState = GS_LOGO_MPEG;");
+						break;
+					}
 
-				    case GS_LOGO_MPEG:
+					case GS_LOGO_MPEG:
 					{
-						WHBLogPrintf("GS_LOGO_MPEG");
 //					    CPad::UpdatePads();
 
 //					    if (startupDeactivate || ControlsManager.GetJoyButtonJustDown() != 0)
-						    ++gGameState;
+							++gGameState;
 //					    else if (CPad::GetPad(0)->GetLeftMouseJustDown())
 //						    ++gGameState;
 //					    else if (CPad::GetPad(0)->GetEnterJustDown())
@@ -1087,12 +1051,11 @@ main(int argc, char *argv[])
 //					    else if (CPad::GetPad(0)->GetTabJustDown())
 //						    ++gGameState;
 
-					    break;
-				    }
+						break;
+					}
 
-				    case GS_INIT_INTRO_MPEG:
+					case GS_INIT_INTRO_MPEG:
 					{
-						WHBLogPrintf("GS_INIT_INTRO_MPEG");
 //#ifndef NO_MOVIES
 //					    CloseClip();
 //					    CoUninitialize();
@@ -1103,18 +1066,17 @@ main(int argc, char *argv[])
 //					    else
 //						    PlayMovieInWindow(cmdShow, "movies\\GTAtitles.mpg");
 
-					    gGameState = GS_INTRO_MPEG;
-					    TRACE("gGameState = GS_INTRO_MPEG;");
-					    break;
-				    }
+						gGameState = GS_INTRO_MPEG;
+						TRACE("gGameState = GS_INTRO_MPEG;");
+						break;
+					}
 
-				    case GS_INTRO_MPEG:
+					case GS_INTRO_MPEG:
 					{
-						WHBLogPrintf("GS_INTRO_MPEG");
 //					    CPad::UpdatePads();
 //
 //					    if (startupDeactivate || ControlsManager.GetJoyButtonJustDown() != 0)
-						    ++gGameState;
+							++gGameState;
 //					    else if (CPad::GetPad(0)->GetLeftMouseJustDown())
 //						    ++gGameState;
 //					    else if (CPad::GetPad(0)->GetEnterJustDown())
@@ -1126,12 +1088,11 @@ main(int argc, char *argv[])
 //					    else if (CPad::GetPad(0)->GetTabJustDown())
 //						    ++gGameState;
 
-					    break;
-				    }
+						break;
+					}
 
 					case GS_INIT_ONCE:
 					{
-						WHBLogPrintf("GS_INIT_ONCE");
 						//CoUninitialize();
 						
 #ifdef PS2_MENU
@@ -1143,10 +1104,8 @@ main(int argc, char *argv[])
 						
 						printf("Into TheGame!!!\n");
 #else				
-						WHBLogPrintf("loadsc0");
 						LoadingScreen(nil, nil, "loadsc0");
 #endif
-						WHBLogPrintf("InitialiseOnceAfterRW");
 						if ( !CGame::InitialiseOnceAfterRW() )
 							RsGlobal.quit = TRUE;
 						
@@ -1162,20 +1121,12 @@ main(int argc, char *argv[])
 #ifndef PS2_MENU
 					case GS_INIT_FRONTEND:
 					{
-						WHBLogPrintf("GS_INIT_FRONTEND");
 						LoadingScreen(nil, nil, "loadsc0");
 						
 						FrontEndMenuManager.m_bGameNotLoaded = true;
 						
 						CMenuManager::m_bStartUpFrontEndRequested = true;
 						
-                        // TODO: wiiu
-						// if ( defaultFullscreenRes )
-						// {
-						// 	defaultFullscreenRes = FALSE;
-						// 	FrontEndMenuManager.m_nPrefsVideoMode = GcurSelVM;
-						// 	FrontEndMenuManager.m_nDisplayVideoMode = GcurSelVM;
-						// }
 						
 						gGameState = GS_FRONTEND;
 						TRACE("gGameState = GS_FRONTEND;");
@@ -1213,7 +1164,6 @@ main(int argc, char *argv[])
 					
 					case GS_INIT_PLAYING_GAME:
 					{
-						WHBLogPrintf("GS_INIT_PLAYING_GAME");
 #ifdef PS2_MENU
 						CGame::Initialise("DATA\\GTA3.DAT");
 						
@@ -1248,7 +1198,6 @@ main(int argc, char *argv[])
 					
 					case GS_PLAYING_GAME:
 					{
-						WHBLogPrintf("GS_PLAYING_GAME");
 						float ms = (float)CTimer::GetCurrentTimeInCycles() / (float)CTimer::GetCyclesPerMillisecond();
 						if ( RwInitialised )
 						{
@@ -1257,19 +1206,6 @@ main(int argc, char *argv[])
 						}
 						break;
 					}
-#ifndef MASTER
-					case GS_ANIMVIEWER:
-					{
-						WHBLogPrintf("GS_ANIMVIEWER");
-						float ms = (float)CTimer::GetCurrentTimeInCycles() / (float)CTimer::GetCyclesPerMillisecond();
-						if (RwInitialised)
-						{
-							if (!CMenuManager::m_PrefsFrameLimiter || (1000.0f / (float)RsGlobal.maxFPS) < ms)
-								RsEventHandler(rsANIMVIEWER, (void*)TRUE);
-						}
-						break;
-					}
-#endif
 				}
 			}
 			else
@@ -1344,9 +1280,12 @@ main(int argc, char *argv[])
 			if ( gGameState == GS_PLAYING_GAME )
 				CGame::ShutDown();
 #ifndef MASTER
-			else if ( gGameState == GS_ANIMVIEWER )
+			if ( gbModelViewer )
 				CAnimViewer::Shutdown();
+			else
 #endif
+			if ( gGameState == GS_PLAYING_GAME )
+				CGame::ShutDown();
 			
 			CTimer::Stop();
 			
@@ -1371,9 +1310,12 @@ main(int argc, char *argv[])
 	if ( gGameState == GS_PLAYING_GAME )
 		CGame::ShutDown();
 #ifndef MASTER
-	else if ( gGameState == GS_ANIMVIEWER )
+	if ( gbModelViewer )
 		CAnimViewer::Shutdown();
+	else
 #endif
+	if ( gGameState == GS_PLAYING_GAME )
+		CGame::ShutDown();
 
 	DMAudio.Terminate();
 	
@@ -1390,8 +1332,8 @@ main(int argc, char *argv[])
 	 */
 	RsEventHandler(rsTERMINATE, nil);
 
-    WHBUnmountSdCard();
-    WHBProcShutdown();
+	WHBUnmountSdCard();
+	WHBProcShutdown();
 	return 0;
 }
 

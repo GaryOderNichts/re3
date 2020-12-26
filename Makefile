@@ -24,9 +24,13 @@ SOURCES		:=	src \
 				src/audio \
 				src/audio/oal \
 				src/audio/eax \
+				src/buildings \
+				src/collision \
 				src/control \
 				src/core \
 				src/entities \
+				src/extras \
+				src/fakerw \
 				src/math \
 				src/modelinfo \
 				src/objects \
@@ -39,9 +43,7 @@ SOURCES		:=	src \
 				src/skel/wiiu/debug \
 				src/text \
 				src/vehicles \
-				src/weapons \
-				src/extras \
-				src/fakerw
+				src/weapons
 DATA		:=	data
 INCLUDES	:=	$(SOURCES) \
 				vendor/librw \

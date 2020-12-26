@@ -42,7 +42,7 @@ static int wiiu_thread_create(OSThread *thread, const void *attr, void *(*start_
 {
     OSThread *handle = (OSThread *)memalign(16, sizeof(OSThread));
     unsigned int stackSize = 0x8000;
-    void *stackTop = memalign(16, stackSize) + stackSize;
+    void *stackTop = (uint8*) memalign(16, stackSize) + stackSize;
 
     if (!OSCreateThread(handle,
                         (OSThreadEntryPointFn)start_routine,
@@ -85,7 +85,11 @@ struct CdReadInfo
 	pthread_t pChannelThread;
 	sem_t *pStartSemaphore;
 #endif
+#ifdef __WIIU__
+	OSSemaphore pDoneSemaphore;
+#else
 	sem_t *pDoneSemaphore; // used for CdStreamSync
+#endif
 	int32 hFile;
 };
 
@@ -103,10 +107,10 @@ OSSemaphore gCdStreamSema;
 #else
 pthread_t _gCdStreamThread;
 sem_t *gCdStreamSema; // released when we have new thing to read(so channel is set)
+#endif
 int8 gCdStreamThreadStatus; // 0: created 1:priority set up 2:abort now
 Queue gChannelRequestQ;
 bool _gbCdStreamOverlapped;
-#endif
 
 CdReadInfo *gpReadInfo;
 
@@ -127,6 +131,9 @@ CdStreamInitThread(void)
 	gChannelRequestQ.tail = 0;
 	gChannelRequestQ.size = gNumChannels + 1;
 	ASSERT(gChannelRequestQ.items != nil );
+#ifdef __WIIU__
+	OSInitSemaphore(&gCdStreamSema, 0);
+#else
 	gCdStreamSema = sem_open("/semaphore_cd_stream", O_CREAT, 0644, 1);
 
 
@@ -136,11 +143,15 @@ CdStreamInitThread(void)
 		return;
 	}
 #endif
+#endif
 
 	if ( gNumChannels > 0 )
 	{
 		for ( int32 i = 0; i < gNumChannels; i++ )
 		{
+#ifdef __WIIU__
+			OSInitSemaphore(&gpReadInfo[i].pDoneSemaphore, 0);
+#else
 			sprintf(semName,"/semaphore_done%d",i);
 			gpReadInfo[i].pDoneSemaphore = sem_open(semName, O_CREAT, 0644, 1);
 
@@ -150,6 +161,7 @@ CdStreamInitThread(void)
 				ASSERT(0);
 				return;
 			}
+#endif
 #ifdef ONE_THREAD_PER_CHANNEL
 			sprintf(semName,"/semaphore_start%d",i);
 			gpReadInfo[i].pStartSemaphore = sem_open(semName, O_CREAT, 0644, 1);
@@ -178,6 +190,9 @@ CdStreamInitThread(void)
 #ifndef ONE_THREAD_PER_CHANNEL
 	debug("Using one streaming thread for all channels\n");
 	gCdStreamThreadStatus = 0;
+#ifdef __WIIU__
+	wiiu_thread_create(&_gCdStreamThread, NULL, CdStreamThread, nil);
+#else
 	status = pthread_create(&_gCdStreamThread, NULL, CdStreamThread, nil);
 
 	if (status == -1)
@@ -186,6 +201,7 @@ CdStreamInitThread(void)
 		ASSERT(0);
 		return;
 	}
+#endif
 #else
 	debug("Using separate streaming threads for each channel\n");
 #endif
@@ -194,6 +210,7 @@ CdStreamInitThread(void)
 void
 CdStreamInit(int32 numChannels)
 {
+#ifndef __WIIU__
 	struct statvfs fsInfo;
 
 	if((statvfs("models/gta3.img", &fsInfo)) < 0)
@@ -216,6 +233,11 @@ CdStreamInit(int32 numChannels)
 	}
 */
 	void *pBuffer = (void *)RwMallocAlign(CDSTREAM_SECTOR_SIZE, (RwUInt32)fsInfo.f_bsize);
+
+#else
+	// statvfs doesn't work properly on wiiu
+	void *pBuffer = (void *)RwMallocAlign(CDSTREAM_SECTOR_SIZE, CDSTREAM_SECTOR_SIZE);
+#endif
 	ASSERT( pBuffer != nil );
 
 	gNumImages = 0;
@@ -266,8 +288,14 @@ CdStreamShutdown(void)
     // Destroying semaphores and free(gpReadInfo) will be done at threads
 #ifndef ONE_THREAD_PER_CHANNEL
 	gCdStreamThreadStatus = 2;
+#ifdef __WIIU__
+	OSSignalSemaphore(&gCdStreamSema);
+	// softlocks
+	// OSJoinThread(&_gCdStreamThread, NULL);
+#else
 	sem_post(gCdStreamSema);
 	pthread_join(_gCdStreamThread, nil);
+#endif
 #else
 	for ( int32 i = 0; i < gNumChannels; i++ ) {
 		gpReadInfo[i].nThreadStatus = 2;
@@ -311,8 +339,12 @@ CdStreamRead(int32 channel, void *buffer, uint32 offset, uint32 size)
 
 #ifndef ONE_THREAD_PER_CHANNEL
 	AddToQueue(&gChannelRequestQ, channel);
+#ifdef __WIIU__
+	OSSignalSemaphore(&gCdStreamSema);
+#else
 	if ( sem_post(gCdStreamSema) != 0 )
 		printf("Signal Sema Error\n");
+#endif
 #else
 	if ( sem_post(pChannel->pStartSemaphore) != 0 )
 		printf("Signal Sema Error\n");
@@ -380,9 +412,15 @@ CdStreamSync(int32 channel)
 		pChannel->nSectorsToRead = 0;
 		if (pChannel->bReading) {
 			pChannel->bLocked = true;
+#ifdef __WIIU__
+			OSCancelThread(&_gCdStreamThread);
+			while (pChannel->bLocked)
+				OSWaitSemaphore(&pChannel->pDoneSemaphore);
+#else
 			pthread_kill(_gCdStreamThread, SIGUSR1);
 			while (pChannel->bLocked)
 				sem_wait(pChannel->pDoneSemaphore);
+#endif
 		}
 #endif
 		pChannel->bReading = false;
@@ -394,7 +432,11 @@ CdStreamSync(int32 channel)
 	{
 		pChannel->bLocked = true;
 		while (pChannel->bLocked)
+#ifdef __WIIU__
+			OSWaitSemaphore(&pChannel->pDoneSemaphore);
+#else
 			sem_wait(pChannel->pDoneSemaphore);
+#endif
 	}
 
 	pChannel->bReading = false;
@@ -445,7 +487,11 @@ void *CdStreamThread(void *param)
 
 #ifndef ONE_THREAD_PER_CHANNEL
 	while (gCdStreamThreadStatus != 2) {
+#ifdef __WIIU__
+		OSWaitSemaphore(&gCdStreamSema);
+#else
 		sem_wait(gCdStreamSema);
+#endif
 		int32 channel = GetFirstInQueue(&gChannelRequestQ);
 #else
 	int channel = *((int*)param);
@@ -498,12 +544,17 @@ void *CdStreamThread(void *param)
 		if ( pChannel->bLocked )
 		{
 			pChannel->bLocked = 0;
+#ifdef __WIIU__
+			OSSignalSemaphore(&pChannel->pDoneSemaphore);
+#else
 			sem_post(pChannel->pDoneSemaphore);	
+#endif
 		}
 		pChannel->bReading = false;
 	}
 	char semName[20];
 #ifndef ONE_THREAD_PER_CHANNEL
+#ifndef __WIIU__
 	for ( int32 i = 0; i < gNumChannels; i++ )
 	{
 		sem_close(gpReadInfo[i].pDoneSemaphore);
@@ -512,6 +563,7 @@ void *CdStreamThread(void *param)
 	}
 	sem_close(gCdStreamSema);
 	sem_unlink("/semaphore_cd_stream");
+#endif
 	free(gChannelRequestQ.items);
 #else
 	sem_close(gpReadInfo[channel].pStartSemaphore);
@@ -525,7 +577,12 @@ void *CdStreamThread(void *param)
 	if (gpReadInfo)
 		free(gpReadInfo);
 	gpReadInfo = nil;
+#ifdef __WIIU__
+	//OSExitThread(0);
+	return 0;
+#else
 	pthread_exit(nil);
+#endif
 #endif
 }
 

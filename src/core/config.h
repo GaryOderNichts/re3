@@ -269,7 +269,7 @@ enum Config {
 #if !defined(RW_GL3) && defined(_WIN32)
 #define XINPUT
 #endif
-#if !defined(_WIN32) && !defined(__SWITCH__)
+#if !defined(_WIN32) && !defined(__SWITCH__) && !defined(__WIIU__)
 #define DONT_TRUST_RECOGNIZED_JOYSTICKS // Then we'll only rely on GLFW gamepad DB, and expect user to enter Controller->Detect joysticks if his joystick isn't on that list.
 #endif
 #define DETECT_PAD_INPUT_SWITCH // Adds automatic switch of pad related stuff between controller and kb/m
@@ -305,7 +305,9 @@ enum Config {
 #		define GRAPHICS_MENU_OPTIONS // otherwise Display settings will be scrollable
 #		define NO_ISLAND_LOADING  // disable loadscreen between islands via loading all island data at once, consumes more memory and CPU
 #		define CUTSCENE_BORDERS_SWITCH
-#		define MULTISAMPLING		// adds MSAA option
+#		ifndef __WIIU__ // not supported in gx2 librw
+#			define MULTISAMPLING		// adds MSAA option
+#		endif
 #		define INVERT_LOOK_FOR_PAD // add bInvertLook4Pad from VC
 #	endif
 #endif

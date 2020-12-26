@@ -41,14 +41,14 @@
 #include <stdarg.h>
 #endif
 
+#ifdef __WIIU__
 #include <coreinit/debug.h>
 #include <whb/log.h>
 #endif
 
-#include <list>
-
 #ifdef RWLIBS
-
+extern "C" int vsprintf(char* const _Buffer, char const* const _Format, va_list  _ArgList);
+#endif
 
 #ifdef USE_PS2_RAND
 unsigned long long myrand_seed = 1;
