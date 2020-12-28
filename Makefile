@@ -48,7 +48,8 @@ DATA		:=	data
 INCLUDES	:=	$(SOURCES) \
 				vendor/librw \
 				vendor/librw/inc \
-				vendor/openal-soft/include
+				vendor/openal-soft/include \
+				vendor/dr_libs
 
 #-------------------------------------------------------------------------------
 # options for code generation
@@ -64,7 +65,7 @@ CXXFLAGS	:= $(CFLAGS)
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lrw -lmpg123 -lopenal -lSDL2 -lsndfile -lwut
+LIBS	:= -lrw -lmpg123 -lopenal -lSDL2 -lwut
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
