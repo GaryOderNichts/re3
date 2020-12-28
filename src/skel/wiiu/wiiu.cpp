@@ -13,6 +13,8 @@
 #include <padscore/wpad.h>
 
 #include <coreinit/time.h>
+#include <coreinit/memheap.h>
+#include <coreinit/memexpheap.h>
 
 #include <stdio.h>
 #include "rwcore.h"
@@ -286,8 +288,17 @@ psInitialize(void)
 
 #endif
 
-	// memory required to have all vehicles loaded
-	_dwMemAvailPhys = 1024*1024*170;
+	MEMHeapHandle heapHandle = MEMGetBaseHeapHandle(MEM_BASE_HEAP_MEM2);
+	if (heapHandle) {
+		_dwMemAvailPhys = MEMGetTotalFreeSizeForExpHeap(heapHandle);
+	}
+	else {
+		debug("Can't get heap handle");
+		// fall back to hardcoded value
+		_dwMemAvailPhys = 1024*1024*500;
+	}
+
+	debug("_dwMemAvailPhys: %u MB", _dwMemAvailPhys/1024/1024);
 
 	TheText.Unload();
 

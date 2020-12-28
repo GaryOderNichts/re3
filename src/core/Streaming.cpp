@@ -222,7 +222,7 @@ CStreaming::Init2(void)
 	desiredNumVehiclesLoaded = (int32)((ms_memoryAvailable / MB - 50) / 3 + 12);
 	if(desiredNumVehiclesLoaded > MAXVEHICLESLOADED)
 		desiredNumVehiclesLoaded = MAXVEHICLESLOADED;
-	debug("Memory allocated to Streaming is %zuMB", ms_memoryAvailable/MB); // original modifier was %d
+	debug("Memory allocated to Streaming is %u", ms_memoryAvailable/MB);
 #undef MB
 #endif
 
