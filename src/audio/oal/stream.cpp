@@ -13,7 +13,7 @@
 #pragma comment( lib, "libsndfile-1.lib" )
 #pragma comment( lib, "libmpg123-0.lib" )
 #endif
-#ifndef __WIIU__
+#if 1
 #include <sndfile.h>
 #else
 #define DR_WAV_IMPLEMENTATION
@@ -27,17 +27,72 @@
 #endif
 
 #ifndef AUDIO_OPUS
-#ifndef __WIIU__
+#ifndef DR_WAV_IMPLEMENTATION
+static sf_count_t sndfile_vio_get_filelen(void* user_data)
+{
+	int32 pos = ftell((FILE*)user_data);
+	fseek((FILE*)user_data, 0, SEEK_END);
+	int32 size = ftell((FILE*)user_data);
+	fseek((FILE*)user_data, pos, SEEK_SET);
+	return size;
+}
+
+static sf_count_t sndfile_vio_seek(sf_count_t offset, int whence, void* user_data)
+{
+	fseek((FILE*)user_data, offset, whence);
+	return ftell((FILE*)user_data);
+}
+
+static sf_count_t sndfile_vio_read(void* ptr, sf_count_t count, void* user_data)
+{
+	return fread(ptr, 1, count, (FILE*)user_data);
+}
+
+static sf_count_t
+sndfile_vio_write(const void* ptr, sf_count_t count, void* user_data)
+{
+	return fwrite(ptr, 1, count, (FILE*)user_data);
+}
+
+static sf_count_t
+sndfile_vio_tell(void* user_data)
+{
+	return ftell((FILE*)user_data);
+}
+
+static SF_VIRTUAL_IO vio =
+{
+	.get_filelen = sndfile_vio_get_filelen,
+	.seek = sndfile_vio_seek,
+	.read = sndfile_vio_read,
+	.write = sndfile_vio_write,
+	.tell = sndfile_vio_tell,
+};
+
 class CSndFile : public IDecoder
 {
 	SNDFILE *m_pfSound;
 	SF_INFO m_soundInfo;
+	FILE* m_fileHandle;
+	char* m_buffer;
 public:
 	CSndFile(const char *path) :
-		m_pfSound(nil)
+		m_pfSound(nil),
+		m_fileHandle(NULL),
+		m_buffer(NULL)
 	{
 		memset(&m_soundInfo, 0, sizeof(m_soundInfo));
-		m_pfSound = sf_open(path, SFM_READ, &m_soundInfo);
+
+		m_buffer = (char*) memalign(0x40, BUFSIZ);
+
+		m_fileHandle = fopen(path, "rb");
+		if (!m_fileHandle) {
+			return;
+		}
+		
+		setbuf(m_fileHandle, m_buffer);
+
+		m_pfSound = sf_open_virtual(&vio, SFM_READ, &m_soundInfo, m_fileHandle);
 	}
 	
 	~CSndFile()
@@ -47,6 +102,11 @@ public:
 			sf_close(m_pfSound);
 			m_pfSound = nil;
 		}
+
+		if (m_fileHandle) {
+			fclose(m_fileHandle);
+		}
+		free(m_buffer);
 	}
 	
 	bool IsOpened()
@@ -470,7 +530,7 @@ CStream::CStream(char *filename, ALuint &source, ALuint (&buffers)[NUM_STREAMBUF
 	if (!strcasecmp(&m_aFilename[strlen(m_aFilename) - strlen(".mp3")], ".mp3"))
 		m_pSoundFile = new CMP3File(m_aFilename);
 	else if (!strcasecmp(&m_aFilename[strlen(m_aFilename) - strlen(".wav")], ".wav"))
-#ifndef __WIIU__
+#ifndef DR_WAV_IMPLEMENTATION
 		m_pSoundFile = new CSndFile(m_aFilename);
 #else
 		m_pSoundFile = new CDrWav(m_aFilename);
