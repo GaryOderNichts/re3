@@ -5,6 +5,7 @@
 #endif
 #include "common.h"
 #include "crossplatform.h"
+#include <malloc.h>
 
 #include "FileMgr.h"
 
@@ -90,7 +91,7 @@ found:
 	if(myfiles[fd].file == nil)
 		return 0;
 #ifdef BUFFER
-	myfiles[fd].buf = (char*) malloc(BUFSIZ);
+	myfiles[fd].buf = (char*) memalign(0x40, BUFSIZ);
 	setbuf(myfiles[fd].file, myfiles[fd].buf);
 #endif
 	return fd;

@@ -3,6 +3,8 @@
 #ifdef AUDIO_OAL
 #include "stream.h"
 #include "sampman.h"
+#include <stdio.h>
+#include <malloc.h>
 
 #ifdef AUDIO_OPUS
 #include <opusfile.h>
@@ -91,16 +93,40 @@ public:
 	}
 };
 #else
+static size_t drwav_read_replacement(void* pUserData, void* pBufferOut, size_t bytesToRead)
+{
+	return fread(pBufferOut, 1, bytesToRead, (FILE*)pUserData);
+}
+
+static drwav_bool32 drwav_seek_replacement(void* pUserData, int offset, drwav_seek_origin origin)
+{
+	return fseek((FILE*)pUserData, offset, origin) == 0;
+}
+
 class CDrWav : public IDecoder
 {
 	drwav m_drWav;
 	bool m_bIsLoaded;
+	FILE* m_fileHandle;
+	char* m_buffer;
 public:
 	CDrWav(const char *path) :
-		m_bIsLoaded(false)
+		m_bIsLoaded(false),
+		m_fileHandle(NULL),
+		m_buffer(NULL)
 	{
 		memset(&m_drWav, 0, sizeof(m_drWav));
-		if( !drwav_init_file(&m_drWav, path, NULL) ) {
+
+		m_buffer = (char*) memalign(0x40, BUFSIZ);
+
+		m_fileHandle = fopen(path, "rb");
+		if (!m_fileHandle) {
+			return;
+		}
+		
+		setbuf(m_fileHandle, m_buffer);
+
+		if( !drwav_init(&m_drWav, drwav_read_replacement, drwav_seek_replacement, m_fileHandle, NULL) ) {
 			return;
 		}
 
@@ -114,6 +140,11 @@ public:
 			drwav_uninit(&m_drWav);
 			m_bIsLoaded = false;
 		}
+
+		if (m_fileHandle) {
+			fclose(m_fileHandle);
+		}
+		free(m_buffer);
 	}
 
 	bool IsOpened()
@@ -175,18 +206,32 @@ public:
 };
 #endif
 
+static ssize_t mpg123_read_replacement(void* handle, void* data, size_t size)
+{
+	return fread(data, 1, size, (FILE*)handle);
+}
+
+static off_t mpg123_seek_replacement(void* handle, off_t offset, int whence)
+{
+	return fseek((FILE*)handle, offset, whence);
+}
+
 class CMP3File : public IDecoder
 {
 	mpg123_handle *m_pMH;
 	bool m_bOpened;
 	uint32 m_nRate;
 	uint32 m_nChannels;
+	FILE* m_fileHandle;
+	char* m_buffer;
 public:
 	CMP3File(const char *path) :
 		m_pMH(nil),
 		m_bOpened(false),
 		m_nRate(0),
-		m_nChannels(0)
+		m_nChannels(0),
+		m_fileHandle(NULL),
+		m_buffer(NULL)
 	{
 		m_pMH = mpg123_new(nil, nil);
 		if ( m_pMH )
@@ -195,7 +240,18 @@ public:
 			int channels = 0;
 			int encoding = 0;
 			
-			m_bOpened = mpg123_open(m_pMH, path) == MPG123_OK
+			m_buffer = (char*) memalign(0x40, BUFSIZ);
+
+			m_fileHandle = fopen(path, "rb");
+			if (!m_fileHandle) {
+				m_bOpened = false;
+				return;
+			}
+			
+			setbuf(m_fileHandle, m_buffer);
+
+			m_bOpened = mpg123_replace_reader_handle(m_pMH, mpg123_read_replacement, mpg123_seek_replacement, NULL) == MPG123_OK 
+				&& mpg123_open_handle(m_pMH, m_fileHandle) == MPG123_OK 
 				&& mpg123_getformat(m_pMH, &rate, &channels, &encoding) == MPG123_OK;
 			m_nRate = rate;
 			m_nChannels = channels;
@@ -214,6 +270,12 @@ public:
 		{
 			mpg123_close(m_pMH);
 			mpg123_delete(m_pMH);
+
+			if (m_fileHandle) {
+				fclose(m_fileHandle);
+			}
+			free(m_buffer);
+
 			m_pMH = nil;
 		}
 	}
