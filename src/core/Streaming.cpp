@@ -256,21 +256,27 @@ CStreaming::Init2(void)
 	}
 }
 
+#ifdef WIIU_CHANNEL
+#define TXD_PATH "/vol/external01/wiiu/apps/re3/MODELS/TXD.IMG"
+#else
+#define TXD_PATH "MODELS\\TXD.IMG"
+#endif
+
 void
 CStreaming::Init(void)
 {
 #ifdef USE_TXD_CDIMAGE
-	int txdHandle = CFileMgr::OpenFile("MODELS\\TXD.IMG", "r");
+	int txdHandle = CFileMgr::OpenFile(TXD_PATH, "r");
 	if (txdHandle)
 		CFileMgr::CloseFile(txdHandle);
 	if (!CheckVideoCardCaps() && txdHandle) {
-		CdStreamAddImage("MODELS\\TXD.IMG");
+		CdStreamAddImage(TXD_PATH);
 		CStreaming::Init2();
 	} else {
 		CStreaming::Init2();
 		if (CreateTxdImageForVideoCard()) {
 			CStreaming::Shutdown();
-			CdStreamAddImage("MODELS\\TXD.IMG");
+			CdStreamAddImage(TXD_PATH);
 			CStreaming::Init2();
 		}
 	}

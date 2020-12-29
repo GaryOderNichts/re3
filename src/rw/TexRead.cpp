@@ -194,7 +194,11 @@ ReadVideoCardCapsFile(GPUcaps *caps)
 {
 	memset(caps, 0, sizeof(GPUcaps));
 
+#ifdef WIIU_CHANNEL
+	int32 file = CFileMgr::OpenFile("/vol/external01/wiiu/apps/re3/DATA/CAPS.DAT", "rb");
+#else
 	int32 file = CFileMgr::OpenFile("DATA\\CAPS.DAT", "rb");
+#endif
 	if (file != 0) {
 		CFileMgr::Read(file, (char*)&caps->version, 4);
 		CFileMgr::Read(file, (char*)&caps->platform, 4);
@@ -221,7 +225,11 @@ WriteVideoCardCapsFile(void)
 {
 	GPUcaps caps;
 	GetGPUcaps(&caps);
+#ifdef WIIU_CHANNEL
+	int32 file = CFileMgr::OpenFile("/vol/external01/wiiu/apps/re3/DATA/CAPS.DAT", "wb");
+#else
 	int32 file = CFileMgr::OpenFile("DATA\\CAPS.DAT", "wb");
+#endif
 	if (file != 0) {
 		CFileMgr::Write(file, (char*)&caps.version, 4);
 		CFileMgr::Write(file, (char*)&caps.platform, 4);
@@ -349,7 +357,11 @@ CreateTxdImageForVideoCard()
 	RwFileFunctions *filesys = RwOsGetFileInterface();
 #endif
 
+#ifdef WIIU_CHANNEL
+	RwStream *img = RwStreamOpen(rwSTREAMFILENAME, rwSTREAMWRITE, "/vol/external01/wiiu/apps/re3/models/txd.img");
+#else
 	RwStream *img = RwStreamOpen(rwSTREAMFILENAME, rwSTREAMWRITE, "models\\txd.img");
+#endif
 	if (img == nil) {
 		// original code does otherwise and it leaks
 		delete []buf;
@@ -449,7 +461,11 @@ CreateTxdImageForVideoCard()
 	rw::gl3::needToReadBackTextures = false;
 #endif
 
+#ifdef WIIU_CHANNEL
+	if (!pDir->WriteDirFile("/vol/external01/wiiu/apps/re3/models/txd.dir")) {
+#else
 	if (!pDir->WriteDirFile("models\\txd.dir")) {
+#endif
 		DealWithTxdWriteError(i, TXDSTORESIZE, "CVT_ERR");
 		delete pDir;
 		return false;

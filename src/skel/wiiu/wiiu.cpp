@@ -16,6 +16,8 @@
 #include <coreinit/memheap.h>
 #include <coreinit/memexpheap.h>
 
+#include <sysapp/launch.h>
+
 #include <stdio.h>
 #include "rwcore.h"
 #include "skeleton.h"
@@ -90,7 +92,11 @@ void _psCreateFolder(const char *path)
 const char *_psGetUserFilesFolder()
 {
 	static char szUserFiles[256];
+#ifdef WIIU_CHANNEL
+	strcpy(szUserFiles, "/vol/external01/wiiu/apps/re3/userfiles");
+#else
 	strcpy(szUserFiles, "userfiles");
+#endif
 	_psCreateFolder(szUserFiles);
 	return szUserFiles;
 }
@@ -822,37 +828,6 @@ _InputTranslateShiftKeyUpDown(RsKeyCodes *rs) {
 	RsKeyboardEventHandler(rshiftStatus ? rsKEYDOWN : rsKEYUP, &(*rs = rsRSHIFT));
 }
 
-#include <coreinit/memory.h>
-#include <coreinit/memheap.h>
-#include <coreinit/memexpheap.h>
-#include <coreinit/memdefaultheap.h>
-
-void memInfo()
-{
-	for(int32_t i = 0; i<2; i++) {
-		MEMHeapHandle defaultHeap = MEMGetBaseHeapHandle((MEMBaseHeapType) i);
-		if(defaultHeap != 0) {
-			uint32_t start = 0;
-			uint32_t size_bytes = 0;
-			OSGetMemBound((OSMemoryType) (i+1),&start,&size_bytes);
-			WHBLogPrintf("Memory Bound MEM%d: startAddress 0x%08X size 0x%08X\n",i+1,start,size_bytes);
-
-			int32_t size = MEMGetAllocatableSizeForExpHeapEx(defaultHeap, 4);
-			int32_t totalSize = MEMGetTotalFreeSizeForExpHeap(defaultHeap);
-			WHBLogPrintf("BaseHandle address 0x%08X: MEM%d with %07d kb memory free in one block, %07d kb in total.\n",defaultHeap,i+1,size/1024,totalSize/1024);
-
-			MEMHeapHandle parent = MEMFindParentHeap(defaultHeap);
-			if(parent != 0) {
-				size = MEMGetAllocatableSizeForExpHeapEx(parent, 4);
-				int32_t totalSize = MEMGetTotalFreeSizeForExpHeap(parent);
-				WHBLogPrintf("It's parent heap is 0x%08X: With %07d kb memory free in one block, %07d kb in total.\n",parent,size/1024,totalSize/1024);
-			} else {
-				WHBLogPrintf("No parent found =(\n");
-			}
-		}
-	}
-}
-
 /*
  *****************************************************************************
  */
@@ -873,10 +848,20 @@ main(int argc, char *argv[])
 
 	WHBLogPrintf("RE3 Wii U started");
 
-	memInfo();
+#ifdef WIIU_CHANNEL
+	// make sure the required folders exist on our SD
+	_psCreateFolder("/vol/external01/wiiu");
+	_psCreateFolder("/vol/external01/wiiu/apps");
+	_psCreateFolder("/vol/external01/wiiu/apps/re3");
+	_psCreateFolder("/vol/external01/wiiu/apps/re3/models");
+	_psCreateFolder("/vol/external01/wiiu/apps/re3/data");
 
-	// Set out working dir to the path where the assets are
+	// read from content
+	chdir("/vol/content");
+#else
+	// Set working dir to the path where the assets are
 	chdir("/vol/external01/wiiu/apps/re3");
+#endif
 
 	/* 
 	 * Initialize the platform independent data.
@@ -1332,6 +1317,14 @@ main(int argc, char *argv[])
 	
 	_psFreeVideoModeList();
 
+#ifdef WIIU_CHANNEL
+	// make sure the menu launches when we quit
+	if (RsGlobal.quit) {
+		SYSLaunchMenu();
+		// process messages until we exit
+		while (WHBProcIsRunning());
+	}
+#endif
 
 	/*
 	 * Tidy up the 3D (RenderWare) components of the application...

@@ -259,8 +259,11 @@ release_existing()
 		alcSuspendContext(ALContext);
 		alcDestroyContext(ALContext);
 	}
+#ifndef WIIU_CHANNEL
+	// Quitting AX seems to softlock as a channel
 	if ( ALDevice )
 		alcCloseDevice(ALDevice);
+#endif
 	
 	ALDevice = NULL;
 	ALContext = NULL;

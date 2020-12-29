@@ -201,11 +201,19 @@ char* casepath(char const* path, bool checkPathFirst)
     if (p[0] == '/' || p[0] == '\\')
     {
 #ifdef __WIIU__
-        // skip the /vol/external01/ as we can't open the root
-        d = opendir("/vol/external01/");
-        p += 16;
-        strcpy(out, "/vol/external01");
-        rl += 15;
+        // skip the /vol/*/ as we can't open it
+        if (strncmp(path, "/vol/content", strlen("/vol/content")) == 0) {
+            d = opendir("/vol/content/");
+            p += 13;
+            strcpy(out, "/vol/content");
+            rl += 12;
+        }
+        else if (strncmp(path, "/vol/external01", strlen("/vol/external01")) == 0) {
+            d = opendir("/vol/external01/");
+            p += 16;
+            strcpy(out, "/vol/external01");
+            rl += 15;
+        }
 #else
         d = opendir("/");
 #endif
