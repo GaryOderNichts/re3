@@ -844,7 +844,9 @@ main(int argc, char *argv[])
 	WHBProcInit();
 	WHBInitCrashHandler();
 
+#ifdef _DEBUG_BUILD_
 	WHBLogUdpInit();
+#endif
 
 	WHBLogPrintf("RE3 Wii U started");
 
@@ -1216,7 +1218,6 @@ main(int argc, char *argv[])
 			}
 		}
 
-		
 		/* 
 		* About to shut down - block resize events again...
 		*/
@@ -1273,8 +1274,6 @@ main(int argc, char *argv[])
 		}
 		else
 		{
-			if ( gGameState == GS_PLAYING_GAME )
-				CGame::ShutDown();
 #ifndef MASTER
 			if ( gbModelViewer )
 				CAnimViewer::Shutdown();
@@ -1303,8 +1302,6 @@ main(int argc, char *argv[])
 	}
 	
 
-	if ( gGameState == GS_PLAYING_GAME )
-		CGame::ShutDown();
 #ifndef MASTER
 	if ( gbModelViewer )
 		CAnimViewer::Shutdown();
@@ -1336,7 +1333,10 @@ main(int argc, char *argv[])
 	 */
 	RsEventHandler(rsTERMINATE, nil);
 
-	WHBUnmountSdCard();
+#ifdef _DEBUG_BUILD_
+	WHBLogUdpDeinit();
+#endif
+
 	WHBProcShutdown();
 	return 0;
 }

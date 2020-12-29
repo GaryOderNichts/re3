@@ -1,3 +1,6 @@
+RELEASE_BUILD := 1
+CHANNEL_BUILD := 0
+
 #-------------------------------------------------------------------------------
 .SUFFIXES:
 #-------------------------------------------------------------------------------
@@ -54,7 +57,7 @@ INCLUDES	:=	$(SOURCES) \
 #-------------------------------------------------------------------------------
 # options for code generation
 #-------------------------------------------------------------------------------
-CFLAGS	:=	-g -Wall -O2 -ffunction-sections -Wno-strict-aliasing \
+CFLAGS	:=	-Wall -O2 -ffunction-sections -Wno-strict-aliasing \
 			-Wno-unknown-pragmas -Wno-parentheses -Wno-sign-compare -Wno-stringop-truncation -Wno-unused-variable \
 			$(MACHDEP)
 
@@ -62,8 +65,20 @@ CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__ -DLIBRW -DAUDIO_OAL -DrwBIGENDIAN -DBI
 
 CXXFLAGS	:= $(CFLAGS)
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map)
+ASFLAGS	:=	$(ARCH)
+LDFLAGS	=	$(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map)
+
+ifeq ($(RELEASE_BUILD), 0)
+	CFLAGS += -g -D_DEBUG_BUILD_
+	CXXFLAGS += -g -D_DEBUG_BUILD_
+	ASFLAGS += -g
+	LDFLAGS += -g
+endif
+
+ifeq ($(CHANNEL_BUILD), 1)
+	CFLAGS += -DWIIU_CHANNEL
+	CXXFLAGS += -DWIIU_CHANNEL
+endif
 
 LIBS	:= -lrw -lmpg123 -lsndfile -lopenal -lSDL2 -lwut
 
@@ -121,7 +136,7 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 .PHONY: $(BUILD) clean vendor all
 
 #-------------------------------------------------------------------------------
-all: vendor $(BUILD)
+all: $(BUILD)
 
 vendor:
 	@echo Building librw
@@ -129,7 +144,7 @@ vendor:
 	@echo Building openal-soft
 	@$(MAKE) --no-print-directory -C $(TOPDIR)/vendor/openal-soft
 
-$(BUILD):
+$(BUILD): | vendor
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
