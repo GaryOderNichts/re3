@@ -161,7 +161,11 @@ int8 CMenuManager::m_PrefsVsyncDisp = 1;
 int8 CMenuManager::m_PrefsFrameLimiter = 1;
 int8 CMenuManager::m_PrefsShowSubtitles = 1;
 int8 CMenuManager::m_PrefsSpeakers;
+#ifdef __WIIU__
+int32 CMenuManager::m_ControlMethod = CONTROL_CLASSIC;
+#else
 int32 CMenuManager::m_ControlMethod;
+#endif
 int8 CMenuManager::m_PrefsDMA = 1;
 int32 CMenuManager::m_PrefsLanguage;
 uint8 CMenuManager::m_PrefsStereoMono; // unused except restore settings
@@ -170,7 +174,11 @@ bool CMenuManager::m_PrefsAllowNastyGame = true;
 bool CMenuManager::m_bStartUpFrontEndRequested;
 bool CMenuManager::m_bShutDownFrontEndRequested;
 
+#ifdef __WIIU__
+int8 CMenuManager::m_PrefsUseWideScreen = AR_AUTO;
+#else
 int8 CMenuManager::m_PrefsUseWideScreen;
+#endif
 int8 CMenuManager::m_PrefsRadioStation;
 int32 CMenuManager::m_PrefsBrightness = 256;
 float CMenuManager::m_PrefsLOD = CRenderer::ms_lodDistScale;
@@ -4969,7 +4977,11 @@ CMenuManager::ProcessButtonPresses(void)
 						m_PrefsLOD = 1.2f;
 						m_PrefsVsync = true;
 						CRenderer::ms_lodDistScale = 1.2f;
+#ifdef __WIIU__
+						m_PrefsUseWideScreen = AR_AUTO;
+#else
 						m_PrefsUseWideScreen = false;
+#endif
 						m_PrefsShowSubtitles = true;
 						m_nDisplayVideoMode = m_nPrefsVideoMode;
 #if GTA_VERSION >= GTA3_PC_11
@@ -5011,7 +5023,11 @@ CMenuManager::ProcessButtonPresses(void)
 							ControlsManager.InitDefaultControlConfigJoyPad(count);
 						}
 #endif
+#ifdef __WIIU__
+						m_ControlMethod = CONTROL_CLASSIC;
+#else
 						m_ControlMethod = CONTROL_STANDARD;
+#endif
 						MousePointerStateHelper.bInvertVertically = false;
 						TheCamera.m_fMouseAccelHorzntl = 0.0025f;
 						CVehicle::m_bDisableMouseSteering = true;
