@@ -1,6 +1,10 @@
 #include "common.h"
 #include "crossplatform.h"
 
+#ifdef __WIIU__
+#include <coreinit/time.h>
+#endif
+
 // Codes compatible with Windows and Linux
 #ifndef _WIN32
 
@@ -17,9 +21,22 @@ void tmToSystemTime(const tm *tm, SYSTEMTIME *out) {
 }
 
 void GetLocalTime_CP(SYSTEMTIME *out) {
+#ifndef __WIIU__
     time_t timestamp = time(nil);
     tm *localTm = localtime(&timestamp);
     tmToSystemTime(localTm, out);
+#else
+    OSCalendarTime time;
+    OSTicksToCalendarTime(OSGetTime(), &time);
+    out->wYear = time.tm_year;
+    out->wMonth = time.tm_mon + 1;
+    out->wDayOfWeek = time.tm_wday;
+    out->wDay = time.tm_mday;
+    out->wHour = time.tm_hour;
+    out->wMinute = time.tm_min;
+    out->wSecond = time.tm_sec;
+    out->wMilliseconds = time.tm_msec;
+#endif
 }
 #endif
 
