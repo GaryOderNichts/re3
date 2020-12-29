@@ -73,6 +73,7 @@ typedef int16_t int16;
 typedef uint32_t uint32;
 typedef int32_t int32;
 typedef uintptr_t uintptr;
+typedef intptr_t intptr;
 typedef uint64_t uint64;
 typedef int64_t int64;
 // hardcode ucs-2
@@ -109,6 +110,10 @@ inline float _floatswap32(float f)
 #define BSWAP32(x) (x)
 #define BSWAP16(x) (x)
 #define FLOATSWAP32(x) (x)
+#endif
+
+#if defined(_MSC_VER)
+typedef ptrdiff_t ssize_t;
 #endif
 
 #ifndef nil

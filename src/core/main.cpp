@@ -66,7 +66,6 @@
 #include "postfx.h"
 #include "custompipes.h"
 #include "screendroplets.h"
-#include "frontendoption.h"
 #include "MemoryHeap.h"
 
 GlobalScene Scene;
@@ -481,21 +480,7 @@ Initialise3D(void *param)
 		DebugMenuInit();
 		DebugMenuPopulate();
 #endif // !DEBUGMENU
-#ifdef CUSTOM_FRONTEND_OPTIONS
-		// Apparently this func. can be run multiple times at the start.
-		if (numCustomFrontendOptions == 0 && numCustomFrontendScreens == 0) {
-			// needs stored language and TheText to be loaded, and last TheText reload is at the start of here
-			CustomFrontendOptionsPopulate();
-		}
-#endif
-		bool ret = CGame::InitialiseRenderWare();
-#ifdef EXTENDED_PIPELINES
-		CustomPipes::CustomPipeInit();	// need Scene.world for this
-#endif
-#ifdef SCREEN_DROPLETS
-		ScreenDroplets::InitDraw();
-#endif
-		return ret;
+		return CGame::InitialiseRenderWare();
 	}
 
 	return (FALSE);
@@ -504,12 +489,6 @@ Initialise3D(void *param)
 static void 
 Terminate3D(void)
 {
-#ifdef SCREEN_DROPLETS
-	ScreenDroplets::Shutdown();
-#endif
-#ifdef EXTENDED_PIPELINES
-	CustomPipes::CustomPipeShutdown();
-#endif
 	CGame::ShutdownRenderWare();
 #ifdef DEBUGMENU
 	DebugMenuShutdown();

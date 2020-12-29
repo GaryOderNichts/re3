@@ -174,7 +174,7 @@ bool CMenuManager::m_PrefsAllowNastyGame = true;
 bool CMenuManager::m_bStartUpFrontEndRequested;
 bool CMenuManager::m_bShutDownFrontEndRequested;
 
-#ifdef __WIIU__
+#ifdef ASPECT_RATIO_SCALE
 int8 CMenuManager::m_PrefsUseWideScreen = AR_AUTO;
 #else
 int8 CMenuManager::m_PrefsUseWideScreen;
@@ -925,7 +925,11 @@ CMenuManager::CheckSliderMovement(int value)
 	case MENUACTION_MOUSESENS:
 		TheCamera.m_fMouseAccelHorzntl += value * 1.0f/200.0f/15.0f;	// ???
 		TheCamera.m_fMouseAccelHorzntl = clamp(TheCamera.m_fMouseAccelHorzntl, 1.0f/3200.0f, 1.0f/200.0f);
+#ifdef FIX_BUGS
+		TheCamera.m_fMouseAccelVertical = TheCamera.m_fMouseAccelHorzntl + 0.0005f;
+#else
 		TheCamera.m_fMouseAccelVertical = TheCamera.m_fMouseAccelHorzntl;
+#endif
 		break;
 	default:
 		return;
@@ -3743,6 +3747,7 @@ CMenuManager::LoadSettings()
 		strcpy(m_PrefsSkinFile, DEFAULT_SKIN_NAME);
 		strcpy(m_aSkinName, DEFAULT_SKIN_NAME);
 	}
+	
 #ifdef LOAD_INI_SETTINGS
 	LoadINISettings(); // needs frontend options to be loaded
 #endif
@@ -4474,13 +4479,21 @@ CMenuManager::ProcessButtonPresses(void)
 			case HOVEROPTION_INCREASE_MOUSESENS:
 				TheCamera.m_fMouseAccelHorzntl += (1.0f / 3000);
 				TheCamera.m_fMouseAccelHorzntl = clamp(TheCamera.m_fMouseAccelHorzntl, 1.0f / 3200, 1.0f / 200);
+#ifdef FIX_BUGS
+				TheCamera.m_fMouseAccelVertical = TheCamera.m_fMouseAccelHorzntl + 0.0005f;
+#else
 				TheCamera.m_fMouseAccelVertical = TheCamera.m_fMouseAccelHorzntl;
+#endif
 				SaveSettings();
 				break;
 			case HOVEROPTION_DECREASE_MOUSESENS:
 				TheCamera.m_fMouseAccelHorzntl -= (1.0f / 3000);
 				TheCamera.m_fMouseAccelHorzntl = clamp(TheCamera.m_fMouseAccelHorzntl, 1.0f / 3200, 1.0f / 200);
+#ifdef FIX_BUGS
+				TheCamera.m_fMouseAccelVertical = TheCamera.m_fMouseAccelHorzntl + 0.0005f;
+#else
 				TheCamera.m_fMouseAccelVertical = TheCamera.m_fMouseAccelHorzntl;
+#endif
 				SaveSettings();
 				break;
 			}
@@ -4977,7 +4990,7 @@ CMenuManager::ProcessButtonPresses(void)
 						m_PrefsLOD = 1.2f;
 						m_PrefsVsync = true;
 						CRenderer::ms_lodDistScale = 1.2f;
-#ifdef __WIIU__
+#ifdef ASPECT_RATIO_SCALE
 						m_PrefsUseWideScreen = AR_AUTO;
 #else
 						m_PrefsUseWideScreen = false;
@@ -5028,7 +5041,12 @@ CMenuManager::ProcessButtonPresses(void)
 #else
 						m_ControlMethod = CONTROL_STANDARD;
 #endif
+#ifdef FIX_BUGS
+						MousePointerStateHelper.bInvertVertically = true;
+						TheCamera.m_fMouseAccelVertical = 0.003f;
+#else
 						MousePointerStateHelper.bInvertVertically = false;
+#endif
 						TheCamera.m_fMouseAccelHorzntl = 0.0025f;
 						CVehicle::m_bDisableMouseSteering = true;
 						TheCamera.m_bHeadBob = false;
@@ -6090,7 +6108,7 @@ CMenuManager::PrintMap(void)
 	CFont::PrintString(nextX, SCREEN_SCALE_FROM_BOTTOM(nextY), TheText.Get("FEC_MOV")); nextX = MENU_X(30.0f); nextY -= 11.0f;
 	TEXT_PIECE("FEC_MSR", 2.0f);
 	TEXT_PIECE("FEC_IBT", 1.0f);
-	CFont::PrintString(nextX, SCREEN_SCALE_FROM_BOTTOM(nextY), TheText.Get("FEC_TAR"));
+	CFont::PrintString(nextX, SCREEN_SCALE_FROM_BOTTOM(nextY), TheText.Get("FEM_TWP"));
 #undef TEXT_PIECE
 }
 

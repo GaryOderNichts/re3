@@ -579,14 +579,13 @@ cAudioManager::ProcessVehicle(CVehicle *veh)
 	m_sQueueSample.m_vecPos = veh->GetPosition();
 
 	params.m_bDistanceCalculated = false;
-	params.m_fDistance = GetDistanceSquared(m_sQueueSample.m_vecPos);
 	params.m_pVehicle = veh;
-	params.m_pTransmission = nil;
-	params.m_nIndex = 0;
-	params.m_fVelocityChange = 0.0f;
+	params.m_fDistance = GetDistanceSquared(m_sQueueSample.m_vecPos);
 
 	if (handling != nil)
 		params.m_pTransmission = &handling->Transmission;
+	else
+		params.m_pTransmission = nil;
 
 	params.m_nIndex = veh->GetModelIndex() - MI_FIRST_VEHICLE;
 	if (params.m_pVehicle->GetStatus() == STATUS_SIMPLE)
@@ -2400,20 +2399,20 @@ cAudioManager::ProcessBoatEngine(cVehicleParams& params)
 	CBoat *boat;
 	float padRelativeAccerate;
 	float gasPedal;
-	int32 padAccelerate;
+	float padAccelerate;
 	uint8 emittingVol;
 	float oneShotVol;
 
 	static uint16 LastAccel = 0;
 	static uint8 LastVol = 0;
 
-	static const int intensity = 50;
+	static const float intensity = 50.0f;
 
 	if (params.m_fDistance < SQR(intensity)) {
 		boat = (CBoat *)params.m_pVehicle;
 		if (params.m_nIndex == REEFER) {
 			CalculateDistance(params.m_bDistanceCalculated, params.m_fDistance);
-			m_sQueueSample.m_nVolume = ComputeVolume(80, 50.f, m_sQueueSample.m_fDistance);
+			m_sQueueSample.m_nVolume = ComputeVolume(80, intensity, m_sQueueSample.m_fDistance);
 			if (m_sQueueSample.m_nVolume != 0) {
 				m_sQueueSample.m_nCounter = 39;
 				m_sQueueSample.m_nSampleIndex = SFX_FISHING_BOAT_IDLE;
@@ -2436,10 +2435,10 @@ cAudioManager::ProcessBoatEngine(cVehicleParams& params)
 			}
 			if (FindPlayerVehicle() == params.m_pVehicle) {
 				padAccelerate = Max(Pads[0].GetAccelerate(), Pads[0].GetBrake());
-				padRelativeAccerate = padAccelerate / 255;
+				padRelativeAccerate = padAccelerate / 255.0f;
 				emittingVol = (100.f * padRelativeAccerate) + 15;
 				m_sQueueSample.m_nFrequency = (3000.f * padRelativeAccerate) + 6000;
-				if (!boat->m_bIsAnchored)
+				if (!boat->bPropellerInWater)
 					m_sQueueSample.m_nFrequency = 11 * m_sQueueSample.m_nFrequency / 10;
 			} else {
 				gasPedal = Abs(boat->m_fGasPedal);
@@ -2449,11 +2448,11 @@ cAudioManager::ProcessBoatEngine(cVehicleParams& params)
 				} else {
 					emittingVol = (100.f * gasPedal) + 15;
 					m_sQueueSample.m_nFrequency = (3000.f * gasPedal) + 6000;
-					if (!boat->m_bIsAnchored)
+					if (!boat->bPropellerInWater)
 						m_sQueueSample.m_nFrequency = 11 * m_sQueueSample.m_nFrequency / 10;
 				}
 			}
-			m_sQueueSample.m_nVolume = ComputeVolume(emittingVol, 50.f, m_sQueueSample.m_fDistance);
+			m_sQueueSample.m_nVolume = ComputeVolume(emittingVol, intensity, m_sQueueSample.m_fDistance);
 			if (!m_sQueueSample.m_nVolume)
 				return true;
 			m_sQueueSample.m_nCounter = 40;
@@ -2511,7 +2510,7 @@ cAudioManager::ProcessBoatEngine(cVehicleParams& params)
 				}
 			}
 			CalculateDistance(params.m_bDistanceCalculated, params.m_fDistance);
-			m_sQueueSample.m_nVolume = ComputeVolume(emittingVol, 50.f, m_sQueueSample.m_fDistance);
+			m_sQueueSample.m_nVolume = ComputeVolume(emittingVol, intensity, m_sQueueSample.m_fDistance);
 			if (!m_sQueueSample.m_nVolume)
 				return true;
 			m_sQueueSample.m_nFrequency += (m_sQueueSample.m_nEntityIndex * 65536) % 1000;

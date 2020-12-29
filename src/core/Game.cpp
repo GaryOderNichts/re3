@@ -32,6 +32,7 @@
 #include "Fluff.h"
 #include "Font.h"
 #include "Frontend.h"
+#include "frontendoption.h"
 #include "GameLogic.h"
 #include "Garages.h"
 #include "GenericGameStorage.h"
@@ -168,6 +169,11 @@ CGame::InitialiseOnceBeforeRW(void)
 #ifdef EXTENDED_COLOURFILTER
 	CPostFX::InitOnce();
 #endif
+#ifdef CUSTOM_FRONTEND_OPTIONS
+	// Not needed here but may be needed in future
+	// if (numCustomFrontendOptions == 0 && numCustomFrontendScreens == 0)
+	CustomFrontendOptionsPopulate();
+#endif
 	return true;
 }
 
@@ -268,12 +274,26 @@ CGame::InitialiseRenderWare(void)
 	CPlayerSkin::Initialise();
 #endif
 	
+#ifdef EXTENDED_PIPELINES
+	CustomPipes::CustomPipeInit();	// need Scene.world for this
+#endif
+#ifdef SCREEN_DROPLETS
+	ScreenDroplets::InitDraw();
+#endif
+
 	return (true);
 }
 
 // missing altogether on PS2
 void CGame::ShutdownRenderWare(void)
 {
+#ifdef SCREEN_DROPLETS
+	ScreenDroplets::Shutdown();
+#endif
+#ifdef EXTENDED_PIPELINES
+	CustomPipes::CustomPipeShutdown();
+#endif
+
 	CMBlur::MotionBlurClose();
 	DestroySplashScreen();
 	CHud::Shutdown();
