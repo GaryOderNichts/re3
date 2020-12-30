@@ -1,9 +1,10 @@
 # re3-wiiu
-<img src="https://github.com/GaryOderNichts/re3-wiiu/blob/master/logo.png?raw=true" alt="re3 logo" width="200">
+<img src="https://github.com/GaryOderNichts/re3-wiiu/blob/wiiu/logo.png?raw=true" alt="re3 logo" width="200">
 
 This is a port of GTA III to the Nintendo Wii U.  
 
 ## Instructions
+For instructions take a look at the GBATemp thread here: https://gbatemp.net/threads/re3-wiiu-gta-iii-wii-u-port.579827/
 
 ## Building
 To build this project make sure you install the requried packages:  
