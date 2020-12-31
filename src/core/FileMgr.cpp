@@ -91,8 +91,8 @@ found:
 	if(myfiles[fd].file == nil)
 		return 0;
 #ifdef BUFFER
-	myfiles[fd].buf = (char*) memalign(0x40, BUFSIZ);
-	setbuf(myfiles[fd].file, myfiles[fd].buf);
+	myfiles[fd].buf = (char*) memalign(0x40, IO_BUFFER_SIZE);
+	setvbuf(myfiles[fd].file, myfiles[fd].buf, _IOFBF, IO_BUFFER_SIZE);
 #endif
 	return fd;
 }

@@ -83,14 +83,14 @@ public:
 	{
 		memset(&m_soundInfo, 0, sizeof(m_soundInfo));
 
-		m_buffer = (char*) memalign(0x40, BUFSIZ);
+		m_buffer = (char*) memalign(0x40, IO_BUFFER_SIZE);
 
 		m_fileHandle = fopen(path, "rb");
 		if (!m_fileHandle) {
 			return;
 		}
 		
-		setbuf(m_fileHandle, m_buffer);
+		setvbuf(m_fileHandle, m_buffer, _IOFBF, IO_BUFFER_SIZE);
 
 		m_pfSound = sf_open_virtual(&vio, SFM_READ, &m_soundInfo, m_fileHandle);
 	}
@@ -177,14 +177,14 @@ public:
 	{
 		memset(&m_drWav, 0, sizeof(m_drWav));
 
-		m_buffer = (char*) memalign(0x40, BUFSIZ);
+		m_buffer = (char*) memalign(0x40, IO_BUFFER_SIZE);
 
 		m_fileHandle = fopen(path, "rb");
 		if (!m_fileHandle) {
 			return;
 		}
 		
-		setbuf(m_fileHandle, m_buffer);
+		setvbuf(m_fileHandle, m_buffer, _IOFBF, IO_BUFFER_SIZE);
 
 		if( !drwav_init(&m_drWav, drwav_read_replacement, drwav_seek_replacement, m_fileHandle, NULL) ) {
 			return;
@@ -300,7 +300,7 @@ public:
 			int channels = 0;
 			int encoding = 0;
 			
-			m_buffer = (char*) memalign(0x40, BUFSIZ);
+			m_buffer = (char*) memalign(0x40, IO_BUFFER_SIZE);
 
 			m_fileHandle = fopen(path, "rb");
 			if (!m_fileHandle) {
@@ -308,7 +308,7 @@ public:
 				return;
 			}
 			
-			setbuf(m_fileHandle, m_buffer);
+			setvbuf(m_fileHandle, m_buffer, _IOFBF, IO_BUFFER_SIZE);
 
 			m_bOpened = mpg123_replace_reader_handle(m_pMH, mpg123_read_replacement, mpg123_seek_replacement, NULL) == MPG123_OK 
 				&& mpg123_open_handle(m_pMH, m_fileHandle) == MPG123_OK 

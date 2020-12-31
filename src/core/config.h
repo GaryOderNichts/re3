@@ -135,6 +135,8 @@ enum Config {
 	NUM_EXPLOSIONS = 48,
 };
 
+#define IO_BUFFER_SIZE 128*1024
+
 // We don't expect to compile for PS2 or Xbox
 // but it might be interesting for documentation purposes
 #define GTA_PC
