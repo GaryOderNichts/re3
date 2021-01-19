@@ -308,10 +308,6 @@ void CReplay::RecordThisFrame(void)
 	general->camera_pos.CopyOnlyMatrix(&TheCamera.GetMatrix());
 	general->player_pos = FindPlayerCoors();
 	general->in_rcvehicle = CWorld::Players[CWorld::PlayerInFocus].m_pRemoteVehicle ? true : false;
-#ifdef BIGENDIAN
-	BSWAP_MTX(general->camera_pos.m_matrix);
-	BSWAP_VECTOR(general->player_pos);
-#endif
 	Record.m_nOffset += sizeof(*general);
 	tClockPacket* clock = (tClockPacket*)&Record.m_pBase[Record.m_nOffset];
 	clock->type = REPLAYPACKET_CLOCK;
@@ -320,13 +316,13 @@ void CReplay::RecordThisFrame(void)
 	Record.m_nOffset += sizeof(*clock);
 	tWeatherPacket* weather = (tWeatherPacket*)&Record.m_pBase[Record.m_nOffset];
 	weather->type = REPLAYPACKET_WEATHER;
-	weather->old_weather = BSWAP32(CWeather::OldWeatherType);
-	weather->new_weather = BSWAP32(CWeather::NewWeatherType);
-	weather->interpolation = FLOATSWAP32(CWeather::InterpolationValue);
+	weather->old_weather = CWeather::OldWeatherType;
+	weather->new_weather = CWeather::NewWeatherType;
+	weather->interpolation = CWeather::InterpolationValue;
 	Record.m_nOffset += sizeof(*weather);
 	tTimerPacket* timer = (tTimerPacket*)&Record.m_pBase[Record.m_nOffset];
 	timer->type = REPLAYPACKET_TIMER;
-	timer->timer = BSWAP32(CTimer::GetTimeInMilliseconds());
+	timer->timer = CTimer::GetTimeInMilliseconds();
 	Record.m_nOffset += sizeof(*timer);
 	CVehiclePool* vehicles = CPools::GetVehiclePool();
 	for (int i = 0; i < vehicles->GetSize(); i++){
@@ -343,7 +339,7 @@ void CReplay::RecordThisFrame(void)
 			tPedHeaderPacket* ph = (tPedHeaderPacket*)&Record.m_pBase[Record.m_nOffset];
 			ph->type = REPLAYPACKET_PED_HEADER;
 			ph->index = i;
-			ph->mi = BSWAP32(p->GetModelIndex());
+			ph->mi = p->GetModelIndex();
 			ph->pedtype = p->m_nPedType;
 			Record.m_nOffset += sizeof(*ph);
 			p->bHasAlreadyBeenRecorded = true;
@@ -360,10 +356,6 @@ void CReplay::RecordThisFrame(void)
 		bt->lifetime = CBulletTraces::aTraces[i].m_lifeTime;
 		bt->inf = CBulletTraces::aTraces[i].m_vecCurrentPos;
 		bt->sup = CBulletTraces::aTraces[i].m_vecTargetPos;
-#ifdef BIGENDIAN
-		BSWAP_VECTOR(bt->inf);
-		BSWAP_VECTOR(bt->sup);
-#endif
 		Record.m_nOffset += sizeof(*bt);
 	}
 	tEndOfFramePacket* eof = (tEndOfFramePacket*)&Record.m_pBase[Record.m_nOffset];
@@ -394,9 +386,6 @@ void CReplay::StorePedUpdate(CPed *ped, int id)
 	pp->index = id;
 	pp->heading = 128.0f / PI * ped->m_fRotationCur;
 	pp->matrix.CompressFromFullMatrix(ped->GetMatrix());
-#ifdef BIGENDIAN
-	BSWAP_VECTOR(pp->matrix.m_vecPos);
-#endif
 	pp->assoc_group_id = ped->m_animGroup;
 	/* 	Would be more sane to use GetJustIndex(ped->m_pMyVehicle) in following assignment */
 	if (ped->InVehicle())
@@ -459,7 +448,7 @@ void CReplay::StoreDetailedPedAnimation(CPed *ped, CStoredDetailedAnimationState
 #ifdef FIX_REPLAY_BUGS
 			state->aBlendDelta[i] = 127.0f / 32.0f * clamp(assoc->blendDelta, -16.0f, 16.0f);
 #endif
-			state->aFlags[i] = BSWAP16(assoc->flags);
+			state->aFlags[i] = assoc->flags;
 			if (assoc->callbackType == CAnimBlendAssociation::CB_FINISH || assoc->callbackType == CAnimBlendAssociation::CB_DELETE) {
 				state->aFunctionCallbackID[i] = FindCBFunctionID(assoc->callback);
 				if (assoc->callbackType == CAnimBlendAssociation::CB_FINISH)
@@ -485,7 +474,7 @@ void CReplay::StoreDetailedPedAnimation(CPed *ped, CStoredDetailedAnimationState
 #ifdef FIX_REPLAY_BUGS
 			state->aBlendDelta2[i] = 127.0f / 16.0f * clamp(assoc->blendDelta, -16.0f, 16.0f);
 #endif
-			state->aFlags2[i] = BSWAP32(assoc->flags);
+			state->aFlags2[i] = assoc->flags;
 			if (assoc->callbackType == CAnimBlendAssociation::CB_FINISH || assoc->callbackType == CAnimBlendAssociation::CB_DELETE) {
 				state->aFunctionCallbackID2[i] = FindCBFunctionID(assoc->callback);
 				if (assoc->callbackType == CAnimBlendAssociation::CB_FINISH)
@@ -515,9 +504,6 @@ void CReplay::ProcessPedUpdate(CPed *ped, float interpolation, CAddressInReplayB
 	ped->m_fRotationCur = pp->heading * PI / 128.0f;
 	ped->m_fRotationDest = pp->heading * PI / 128.0f;
 	CMatrix ped_matrix;
-#ifdef BIGENDIAN
-	BSWAP_VECTOR(pp->matrix.m_vecPos);
-#endif
 	pp->matrix.DecompressIntoFullMatrix(ped_matrix);
 	ped->GetMatrix() = ped->GetMatrix() * CMatrix(1.0f - interpolation);
 	ped->GetMatrix().GetPosition() *= (1.0f - interpolation);
@@ -705,16 +691,13 @@ void CReplay::StoreCarUpdate(CVehicle *vehicle, int id)
 	vp->type = REPLAYPACKET_VEHICLE;
 	vp->index = id;
 	vp->matrix.CompressFromFullMatrix(vehicle->GetMatrix());
-#ifdef BIGENDIAN
-	BSWAP_VECTOR(vp->matrix.m_vecPos);
-#endif
 	vp->health = vehicle->m_fHealth / 4.0f; /* Not anticipated that health can be > 1000. */
 	vp->acceleration = vehicle->m_fGasPedal * 100.0f;
-	vp->panels = BSWAP32(vehicle->IsCar() ? ((CAutomobile*)vehicle)->Damage.m_panelStatus : 0);
+	vp->panels = vehicle->IsCar() ? ((CAutomobile*)vehicle)->Damage.m_panelStatus : 0;
 	vp->velocityX = 8000.0f * Max(-4.0f, Min(4.0f, vehicle->GetMoveSpeed().x)); /* 8000!? */
 	vp->velocityY = 8000.0f * Max(-4.0f, Min(4.0f, vehicle->GetMoveSpeed().y));
 	vp->velocityZ = 8000.0f * Max(-4.0f, Min(4.0f, vehicle->GetMoveSpeed().z));
-	vp->mi = BSWAP32(vehicle->GetModelIndex());
+	vp->mi = vehicle->GetModelIndex();
 	vp->primary_color = vehicle->m_currentColour1;
 	vp->secondary_color = vehicle->m_currentColour2;
 	if (vehicle->GetModelIndex() == MI_RHINO)
@@ -746,9 +729,6 @@ void CReplay::ProcessCarUpdate(CVehicle *vehicle, float interpolation, CAddressI
 		return;
 	}
 	CMatrix vehicle_matrix;
-#ifdef BIGENDIAN
-	BSWAP_VECTOR(vp->matrix.m_vecPos);
-#endif
 	vp->matrix.DecompressIntoFullMatrix(vehicle_matrix);
 	vehicle->GetMatrix() = vehicle->GetMatrix() * CMatrix(1.0f - interpolation);
 	vehicle->GetMatrix().GetPosition() *= (1.0f - interpolation);
@@ -757,7 +737,7 @@ void CReplay::ProcessCarUpdate(CVehicle *vehicle, float interpolation, CAddressI
 	vehicle->m_fHealth = 4 * vp->health;
 	vehicle->m_fGasPedal = vp->acceleration / 100.0f;
 	if (vehicle->IsCar())
-		ApplyPanelDamageToCar(BSWAP32(vp->panels), (CAutomobile*)vehicle, true);
+		ApplyPanelDamageToCar(vp->panels, (CAutomobile*)vehicle, true);
 	vehicle->m_vecMoveSpeed = CVector(vp->velocityX / 8000.0f, vp->velocityY / 8000.0f, vp->velocityZ / 8000.0f);
 	if (vehicle->GetModelIndex() == MI_RHINO) {
 		((CAutomobile*)vehicle)->m_fCarGunLR = vp->car_gun * PI / 128.0f;
@@ -863,7 +843,7 @@ bool CReplay::PlayBackThisFrameInterpolation(CAddressInReplayBuffer *buffer, flo
 			CVehicle* v = CPools::GetVehiclePool()->GetSlot(vp->index);
 			CVehicle* new_v;
 			if (!v) {
-				int mi = BSWAP16(vp->mi);
+				int mi = vp->mi;
 				if (CStreaming::ms_aInfoForModel[mi].m_loadState != 1) {
 					CStreaming::RequestModel(mi, 0);
 				}
@@ -898,11 +878,11 @@ bool CReplay::PlayBackThisFrameInterpolation(CAddressInReplayBuffer *buffer, flo
 		{
 			tPedHeaderPacket* ph = (tPedHeaderPacket*)&ptr[offset];
 			if (!CPools::GetPedPool()->GetSlot(ph->index)) {
-				if (CStreaming::ms_aInfoForModel[BSWAP16(ph->mi)].m_loadState != 1) {
-					CStreaming::RequestModel(BSWAP16(ph->mi), 0);
+				if (CStreaming::ms_aInfoForModel[ph->mi].m_loadState != 1) {
+					CStreaming::RequestModel(ph->mi, 0);
 				}
 				else {
-					CPed* new_p = new(ph->index << 8) CCivilianPed((ePedType)ph->pedtype, BSWAP16(ph->mi));
+					CPed* new_p = new(ph->index << 8) CCivilianPed((ePedType)ph->pedtype, ph->mi);
 					new_p->SetStatus(STATUS_PLAYER_PLAYBACKFROMBUFFER);
 					new_p->GetMatrix().SetUnity();
 					CWorld::Add(new_p);
@@ -929,9 +909,6 @@ bool CReplay::PlayBackThisFrameInterpolation(CAddressInReplayBuffer *buffer, flo
 		case REPLAYPACKET_GENERAL:
 		{
 			tGeneralPacket* pg = (tGeneralPacket*)&ptr[offset];
-#ifdef BIGENDIAN
-			BSWAP_MTX(pg->camera_pos.m_matrix);
-#endif
 			TheCamera.GetMatrix() = TheCamera.GetMatrix() * CMatrix(split);
 			TheCamera.GetMatrix().GetPosition() *= split;
 			TheCamera.GetMatrix() += CMatrix(interpolation) * pg->camera_pos;
@@ -940,9 +917,9 @@ bool CReplay::PlayBackThisFrameInterpolation(CAddressInReplayBuffer *buffer, flo
 			pm->at = TheCamera.GetForward();
 			pm->up = TheCamera.GetUp();
 			pm->right = TheCamera.GetRight();
-			CameraFocusX = split * CameraFocusX + interpolation * FLOATSWAP32(pg->player_pos.x);
-			CameraFocusY = split * CameraFocusY + interpolation * FLOATSWAP32(pg->player_pos.y);
-			CameraFocusZ = split * CameraFocusZ + interpolation * FLOATSWAP32(pg->player_pos.z);
+			CameraFocusX = split * CameraFocusX + interpolation * pg->player_pos.x;
+			CameraFocusY = split * CameraFocusY + interpolation * pg->player_pos.y;
+			CameraFocusZ = split * CameraFocusZ + interpolation * pg->player_pos.z;
 			bPlayerInRCBuggy = pg->in_rcvehicle;
 			buffer->m_nOffset += sizeof(tGeneralPacket);
 			break;
@@ -959,7 +936,7 @@ bool CReplay::PlayBackThisFrameInterpolation(CAddressInReplayBuffer *buffer, flo
 			tWeatherPacket* pw = (tWeatherPacket*)&ptr[offset];
 			CWeather::OldWeatherType = pw->old_weather;
 			CWeather::NewWeatherType = pw->new_weather;
-			CWeather::InterpolationValue = FLOATSWAP32(pw->interpolation);
+			CWeather::InterpolationValue = pw->interpolation;
 			buffer->m_nOffset += sizeof(tWeatherPacket);
 			break;
 		}
@@ -974,18 +951,14 @@ bool CReplay::PlayBackThisFrameInterpolation(CAddressInReplayBuffer *buffer, flo
 		{
 			tTimerPacket* pt = (tTimerPacket*)&ptr[offset];
 			if (pTimer)
-				*pTimer = BSWAP32(pt->timer);
-			CTimer::SetTimeInMilliseconds(BSWAP32(pt->timer));
+				*pTimer = pt->timer;
+			CTimer::SetTimeInMilliseconds(pt->timer);
 			buffer->m_nOffset += sizeof(tTimerPacket);
 			break;
 		}
 		case REPLAYPACKET_BULLET_TRACES:
 		{
 			tBulletTracePacket* pb = (tBulletTracePacket*)&ptr[offset];
-#ifdef BIGENDIAN
-			BSWAP_VECTOR(pb->inf);
-			BSWAP_VECTOR(pb->sup);
-#endif
 			CBulletTraces::aTraces[pb->index].m_bInUse = true;
 			CBulletTraces::aTraces[pb->index].m_framesInUse = pb->frames;
 			CBulletTraces::aTraces[pb->index].m_lifeTime = pb->lifetime;
@@ -1524,10 +1497,10 @@ void CReplay::StreamAllNecessaryCarsAndPeds(void)
 		for (size_t offset = 0; Buffers[slot][offset] != REPLAYPACKET_END; offset += FindSizeOfPacket(Buffers[slot][offset])) {
 			switch (Buffers[slot][offset]) {
 			case REPLAYPACKET_VEHICLE:
-				CStreaming::RequestModel(BSWAP16(((tVehicleUpdatePacket*)&Buffers[slot][offset])->mi), 0);
+				CStreaming::RequestModel(((tVehicleUpdatePacket*)&Buffers[slot][offset])->mi, 0);
 				break;
 			case REPLAYPACKET_PED_HEADER:
-				CStreaming::RequestModel(BSWAP16(((tPedHeaderPacket*)&Buffers[slot][offset])->mi), 0);
+				CStreaming::RequestModel(((tPedHeaderPacket*)&Buffers[slot][offset])->mi, 0);
 				break;
 			default:
 				break;
@@ -1545,15 +1518,7 @@ void CReplay::FindFirstFocusCoordinate(CVector *coord)
 			continue;
 		for (size_t offset = 0; Buffers[slot][offset] != REPLAYPACKET_END; offset += FindSizeOfPacket(Buffers[slot][offset])) {
 			if (Buffers[slot][offset] == REPLAYPACKET_GENERAL) {
-#ifndef BIGENDIAN
 				*coord = ((tGeneralPacket*)&Buffers[slot][offset])->player_pos;
-#else
-				CVector* pos = &((tGeneralPacket*)&Buffers[slot][offset])->player_pos;
-				pos->x = FLOATSWAP32(pos->x);
-				pos->y = FLOATSWAP32(pos->y);
-				pos->z = FLOATSWAP32(pos->z);
-				*coord = *pos;
-#endif
 				return;
 			}
 		}
