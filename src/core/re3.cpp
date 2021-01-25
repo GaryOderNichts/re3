@@ -34,7 +34,7 @@
 #include "MBlur.h"
 #include "ControllerConfig.h"
 
-#ifdef DONT_TRUST_RECOGNIZED_JOYSTICKS
+#if 1
 #include "crossplatform.h"
 #endif
 

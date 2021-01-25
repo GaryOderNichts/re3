@@ -641,7 +641,11 @@ public:
 	}
 };
 #endif
+#endif
 
+#ifdef AUDIO_OAL_USE_MPG123
+// fuzzy seek eliminates stutter when playing ADF but spams errors a lot (nothing breaks though)
+#define MP3_USE_FUZZY_SEEK
 static ssize_t mpg123_read_replacement(void* handle, void* data, size_t size)
 {
 	return fread(data, 1, size, (FILE*)handle);
@@ -651,11 +655,6 @@ static off_t mpg123_seek_replacement(void* handle, off_t offset, int whence)
 {
 	return fseek((FILE*)handle, offset, whence);
 }
-#endif
-
-#ifdef AUDIO_OAL_USE_MPG123
-// fuzzy seek eliminates stutter when playing ADF but spams errors a lot (nothing breaks though)
-#define MP3_USE_FUZZY_SEEK
 
 class CMP3File : public IDecoder
 {

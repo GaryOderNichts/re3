@@ -158,7 +158,7 @@ enum Config {
 
 // This is enabled for all released games except mobile
 // any debug stuff that is only left in mobile, is not in MASTER
-#define MASTER
+//#define MASTER
 
 // once and for all:
 // pc: FINAL & MASTER
@@ -384,7 +384,7 @@ enum Config {
 #define RADIO_SCROLL_TO_PREV_STATION
 #define AUDIO_CACHE
 //#define PS2_AUDIO_PATHS // changes audio paths for cutscenes and radio to PS2 paths (needs vbdec on MSS builds)
-//#define AUDIO_OAL_USE_SNDFILE // use libsndfile to decode WAVs instead of our internal decoder
+#define AUDIO_OAL_USE_SNDFILE // use libsndfile to decode WAVs instead of our internal decoder
 #define AUDIO_OAL_USE_MPG123 // use mpg123 to support mp3 files
 
 #ifdef AUDIO_OPUS

@@ -102,6 +102,10 @@ typedef int64_t int64;
 // hardcode ucs-2
 typedef uint16_t wchar;
 
+typedef uint8 bool8;
+typedef uint16 bool16;
+typedef uint32 bool32;
+
 #ifdef BIGENDIAN
 inline float _floatswap32(float f)
 {
@@ -134,11 +138,6 @@ inline float _floatswap32(float f)
 #define BSWAP16(x) (x)
 #define FLOATSWAP32(x) (x)
 #endif
-
-#if defined(_MSC_VER)
-typedef uint8 bool8;
-typedef uint16 bool16;
-typedef uint32 bool32;
 
 #if defined(_MSC_VER) || defined (__MWERKS__)
 typedef ptrdiff_t ssize_t;

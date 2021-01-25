@@ -2026,7 +2026,6 @@ cSampleManager::InitialiseSampleBanks(void)
 		m_aSamples[i].nLoopEnd = BSWAP32(m_aSamples[i].nLoopEnd);
 	}
 #endif
-#ifdef AUDIO_OPUS
 #ifdef OPUS_SFX
 	int32 _nSampleDataEndOffset = m_aSamples[TOTAL_AUDIO_SAMPLES - 1].nOffset + m_aSamples[TOTAL_AUDIO_SAMPLES - 1].nSize;
 #endif
