@@ -139,6 +139,7 @@ CEntity::DetachFromRwObject(void)
 	m_matrix.Detach();
 }
 
+#ifdef PED_SKIN
 RpAtomic*
 AtomicRemoveAnimFromSkinCB(RpAtomic *atomic, void *data)
 {
@@ -158,6 +159,7 @@ AtomicRemoveAnimFromSkinCB(RpAtomic *atomic, void *data)
 	}
 	return atomic;
 }
+#endif
 
 void
 CEntity::DeleteRwObject(void)
@@ -228,12 +230,8 @@ CEntity::GetBoundRadius(void)
 void
 CEntity::UpdateRwFrame(void)
 {
-	if(m_rwObject){
-		if(RwObjectGetType(m_rwObject) == rpATOMIC)
-			RwFrameUpdateObjects(RpAtomicGetFrame((RpAtomic*)m_rwObject));
-		else if(RwObjectGetType(m_rwObject) == rpCLUMP)
-			RwFrameUpdateObjects(RpClumpGetFrame((RpClump*)m_rwObject));
-	}
+	if(m_rwObject)
+		RwFrameUpdateObjects((RwFrame*)rwObjectGetParent(m_rwObject));
 }
 
 #ifdef PED_SKIN
@@ -409,7 +407,11 @@ CEntity::GetIsOnScreen(void)
 bool
 CEntity::GetIsOnScreenComplex(void)
 {
-	RwV3d boundBox[8];
+#ifdef GTA_PS2
+	CVuVector boundBox[8];
+#else
+	CVector boundBox[8];
+#endif
 
 	if(TheCamera.IsPointVisible(GetBoundCentre(), &TheCamera.GetCameraMatrix()))
 		return true;
@@ -586,7 +588,7 @@ CEntity::SetupBigBuilding(void)
 	if(m_level == LEVEL_GENERIC){
 		if(mi->GetTxdSlot() != CTxdStore::FindTxdSlot("generic")){
 			mi->SetTexDictionary("generic");
-			printf("%d:%s txd has been set to generic\n", m_modelIndex, mi->GetName());
+			printf("%d:%s txd has been set to generic\n", m_modelIndex, mi->GetModelName());
 		}
 	}
 	if(mi->m_lodDistances[0] > 2000.0f)

@@ -1,22 +1,30 @@
 #if defined RW_GL3 && !defined LIBRW_SDL2
 
 #ifdef _WIN32
-#include <windows.h>
+#include <shlobj.h>
+#include <basetsd.h>
 #include <mmsystem.h>
+#include <regstr.h>
 #include <shellapi.h>
 #include <windowsx.h>
-#include <basetsd.h>
-#include <regstr.h>
-#include <shlobj.h>
+
+DWORD _dwOperatingSystemVersion;
+#include "resource.h"
+#else
+long _dwOperatingSystemVersion;
+#ifndef __APPLE__
+#include <sys/sysinfo.h>
+#else
+#include <mach/mach_host.h>
+#include <sys/sysctl.h>
+#endif
+#include <errno.h>
+#include <locale.h>
+#include <signal.h>
+#include <stddef.h>
 #endif
 
-#define WITHWINDOWS
 #include "common.h"
-
-#pragma warning( push )
-#pragma warning( disable : 4005)
-#pragma warning( pop )
-
 #if (defined(_MSC_VER))
 #include <tchar.h>
 #endif /* (defined(_MSC_VER)) */
@@ -72,23 +80,6 @@ static psGlobalType PsGlobal;
 
 size_t _dwMemAvailPhys;
 RwUInt32 gGameState;
-
-#ifdef _WIN32
-DWORD _dwOperatingSystemVersion;
-#include "resource.h"
-#else
-long _dwOperatingSystemVersion;
-#ifndef __APPLE__
-#include <sys/sysinfo.h>
-#else
-#include <mach/mach_host.h>
-#include <sys/sysctl.h>
-#endif
-#include <stddef.h>
-#include <locale.h>
-#include <signal.h>
-#include <errno.h>
-#endif
 
 #ifdef DONT_TRUST_RECOGNIZED_JOYSTICKS
 char gSelectedJoystickName[128] = "";
@@ -211,6 +202,10 @@ psGrabScreen(RwCamera *pCamera)
 		RwImageSetFromRaster(pImage, pRaster);
 		return pImage;
 	}
+#else
+	rw::Image *image = RwCameraGetRaster(pCamera)->toImage();
+	if(image)
+		return image;
 #endif
 	return nil;
 }
@@ -1610,6 +1605,13 @@ main(int argc, char *argv[])
 	{
 		CFileMgr::SetDirMyDocuments();
 		
+#ifdef LOAD_INI_SETTINGS
+		// At this point InitDefaultControlConfigJoyPad must have set all bindings to default and ms_padButtonsInited to number of detected buttons.
+		// We will load stored bindings below, but let's cache ms_padButtonsInited before LoadINIControllerSettings and LoadSettings clears it,
+		// so we can add new joy bindings **on top of** stored bindings.
+		int connectedPadButtons = ControlsManager.ms_padButtonsInited;
+#endif
+
 		int32 gta3set = CFileMgr::OpenFile("gta3.set", "r");
 		
 		if ( gta3set )
@@ -1619,6 +1621,14 @@ main(int argc, char *argv[])
 		}
 		
 		CFileMgr::SetDir("");
+
+#ifdef LOAD_INI_SETTINGS
+		LoadINIControllerSettings();
+		if (connectedPadButtons != 0) {
+			ControlsManager.InitDefaultControlConfigJoyPad(connectedPadButtons);
+			SaveINIControllerSettings();
+		}
+#endif
 	}
 	
 #ifdef _WIN32
@@ -2131,6 +2141,12 @@ void joysChangeCB(int jid, int event)
 			PSGLOBAL(joy1id) = jid;
 #ifdef DONT_TRUST_RECOGNIZED_JOYSTICKS
 			strcpy(gSelectedJoystickName, glfwGetJoystickName(jid));
+#endif
+			// This is behind LOAD_INI_SETTINGS, because otherwise the Init call below will destroy/overwrite your bindings.
+#ifdef LOAD_INI_SETTINGS
+			int count;
+			glfwGetJoystickButtons(PSGLOBAL(joy1id), &count);
+			ControlsManager.InitDefaultControlConfigJoyPad(count);
 #endif
 		} else if (PSGLOBAL(joy2id) == -1)
 			PSGLOBAL(joy2id) = jid;

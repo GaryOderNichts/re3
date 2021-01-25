@@ -534,7 +534,7 @@ bool
 CFileLoader::StartLoadClumpFile(RwStream *stream, uint32 id)
 {
 	if(RwStreamFindChunk(stream, rwID_CLUMP, nil, nil)){
-		printf("Start loading %s\n", CModelInfo::GetModelInfo(id)->GetName());
+		printf("Start loading %s\n", CModelInfo::GetModelInfo(id)->GetModelName());
 		return RpClumpGtaStreamRead1(stream);
 	}else{
 		printf("FAILED\n");
@@ -548,7 +548,7 @@ CFileLoader::FinishLoadClumpFile(RwStream *stream, uint32 id)
 	RpClump *clump;
 	CClumpModelInfo *mi;
 
-	printf("Finish loading %s\n", CModelInfo::GetModelInfo(id)->GetName());
+	printf("Finish loading %s\n", CModelInfo::GetModelInfo(id)->GetModelName());
 	clump = RpClumpGtaStreamRead2(stream);
 
 	if(clump){
@@ -646,7 +646,6 @@ char *DoubleSidedNames[] = {
 	"overpass_comse",
 	"newdockbuilding",
 	"newdockbuilding2",
-	"newdockbuilding",
 	"policeballhall",
 	"fuzballdoor",
 	"ind_land106",
@@ -670,7 +669,98 @@ char *DoubleSidedNames[] = {
 	"railtrax_2b",
 	"railtrax_straightss",
 	"railtrax_bentr",
+	"ind_land125",
+	"salvstrans",
+	"bridge_liftsec",
+	"subsign1",
+	"carparkfence",
+	"newairportwall4",
+	"apair_terminal",
+	"Helipad",
+	"bar_barrier10",
+	"damissionfence",
+	"sub_floodlite",
+	"suburbbridge1",
+	"damfencing",
+	"demfence08",
+	"damfence07",
+	"damfence06",
+	"damfence05",
+	"damfence04",
+	"damfence03",
+	"damfence02",
+	"damfence01",
+	"Dam_pod2",
+	"Dam_pod1",
+	"columansion_wall",
+	"wrckdhse020",
+	"wrckdhse01",
+	"arc_bridge",
+	"gRD_overpass19kbc",
+	"gRD_overpass19bkb",
+	"gRD_overpass19kb",
+	"gRD_overpass18kb",
+	"road_under",
+	"com_roadkb23",
+	"com_roadkb22",
+	"nbbridgerda",
+	"nbbridgerdb",
+	"policetenkb1",
+	"block3_scraper2",
+	"Clnm_cthdrlfcde",
+	"broadwaybuild",
+	"combillboard03",
+	"com_park3b",
+	"com_docksaa",
+	"newdockbuilding2",
+	"com_roadkb22",
+	"sidebarrier_gaz2",
+	"tunnelsupport1",
+	"skyscrpunbuilt2",
+	"cons_buid02",
+	"rail_platformw",
+	"railtrax_bent1",
+	"nrailstepswest",
+	"building_fucked",
+	"franksclb02",
+	"salvsdetail",
+	"crgoshp01",
+	"shp_wlkway",
+	"bar_barriergate1",
+	"plnt_pylon01",
+	"fishfctory",
+	"doc_crane_cab",
+	"nrailsteps",
+	"iten_club01",
+	"mak_Watertank",
+	"basketballcourt"
+	"carlift01",
+	"carlift02",
+	"iten_chinatown4",
+	"iten_details7",
+	"ind_customroad002"
+	"ind_brgrd1way",
+	"ind_customroad060",
+	"ind_customroad002",
+	"ind_land108",
+	"ind_customroad004",
+	"ind_customroad003",
+	"nbbridgcabls01",
+	"sbwy_tunl_bit",
+	"sbwy_tunl_bend",
+	"sbwy_tunl_cstm11",
+	"sbwy_tunl_cstm10",
+	"sbwy_tunl_cstm9",
+	"sbwy_tunl_cstm8",
+	"sbwy_tunl_cstm7",
+	"sbwy_tunl_cstm6",
+	"sbwy_tunl_cstm5",
+	"sbwy_tunl_cstm4",
+	"sbwy_tunl_cstm3",
+	"sbwy_tunl_cstm2",
+	"sbwy_tunl_cstm1",
 	""
+
 };
 char *TreeNames[] = {
 	"coast_treepatch",
@@ -1074,9 +1164,9 @@ SetModelInfoFlags(CSimpleModelInfo *mi, uint32 flags)
 
 #ifdef HARDCODED_MODEL_FLAGS
 	// mobile sets these flags in CFileLoader::SetRelatedModelInfoCB, but that's stupid
-	if(MatchModelName(mi->GetName(), DoubleSidedNames)) mi->m_bIsDoubleSided = true;
-	if(MatchModelName(mi->GetName(), TreeNames)) mi->m_bIsTree = true;
-	if(MatchModelName(mi->GetName(), OptimizedNames)) mi->m_bCanBeIgnored = true;
+	if(MatchModelName(mi->GetModelName(), DoubleSidedNames)) mi->m_bIsDoubleSided = true;
+	if(MatchModelName(mi->GetModelName(), TreeNames)) mi->m_bIsTree = true;
+	if(MatchModelName(mi->GetModelName(), OptimizedNames)) mi->m_bCanBeIgnored = true;
 #endif
 
 #endif
@@ -1118,7 +1208,7 @@ CFileLoader::LoadObject(const char *line)
 	}
 
 	mi = CModelInfo::AddSimpleModel(id);
-	mi->SetName(model);
+	mi->SetModelName(model);
 	mi->SetNumAtomics(numObjs);
 	mi->SetLodDistances(dist);
 	SetModelInfoFlags(mi, flags);
@@ -1137,7 +1227,7 @@ CFileLoader::LoadMLO(const char *line)
 
 	sscanf(line, "%s %s %d %f", smth, name, &modelIndex, &someFloat);
 	CMloModelInfo *minfo = CModelInfo::AddMloModel(modelIndex);
-	minfo->SetName(name);
+	minfo->SetModelName(name);
 	minfo->field_34 = someFloat;
 	int instId = CModelInfo::GetMloInstanceStore().allocPtr;
 	minfo->firstInstance = instId;
@@ -1215,7 +1305,7 @@ CFileLoader::LoadTimeObject(const char *line)
 	}
 
 	mi = CModelInfo::AddTimeModel(id);
-	mi->SetName(model);
+	mi->SetModelName(model);
 	mi->SetNumAtomics(numObjs);
 	mi->SetLodDistances(dist);
 	SetModelInfoFlags(mi, flags);
@@ -1237,7 +1327,7 @@ CFileLoader::LoadClumpObject(const char *line)
 
 	if(sscanf(line, "%d %s %s", &id, model, txd) == 3){
 		mi = CModelInfo::AddClumpModel(id);
-		mi->SetName(model);
+		mi->SetModelName(model);
 		mi->SetTexDictionary(txd);
 		mi->SetColModel(&CTempColModels::ms_colModelBBox);
 	}
@@ -1261,7 +1351,7 @@ CFileLoader::LoadVehicleObject(const char *line)
 		&frequency, &level, &comprules, &misc, &wheelScale);
 
 	mi = CModelInfo::AddVehicleModel(id);
-	mi->SetName(model);
+	mi->SetModelName(model);
 	mi->SetTexDictionary(txd);
 	for(p = gamename; *p; p++)
 		if(*p == '_') *p = ' ';
@@ -1340,7 +1430,7 @@ CFileLoader::LoadPedObject(const char *line)
 		return;
 
 	mi = CModelInfo::AddPedModel(id);
-	mi->SetName(model);
+	mi->SetModelName(model);
 	mi->SetTexDictionary(txd);
 	mi->SetColModel(&CTempColModels::ms_colModelPed1);
 	mi->m_pedType = CPedType::FindPedType(pedType);
@@ -1814,7 +1904,7 @@ CFileLoader::ReloadObject(const char *line)
 #ifdef FIX_BUGS
 		mi &&
 #endif
-	    mi->GetModelType() == MITYPE_SIMPLE && !strcmp(mi->GetName(), model) && mi->m_numAtomics == numObjs) {
+	    mi->GetModelType() == MITYPE_SIMPLE && !strcmp(mi->GetModelName(), model) && mi->m_numAtomics == numObjs) {
 		mi->SetLodDistances(dist);
 		SetModelInfoFlags(mi, flags);
 	} else {

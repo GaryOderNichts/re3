@@ -358,3 +358,6 @@ sdk/
 *.rpx
 *.elf
 /.vscode
+codewarrior/re3_Data/
+codewarrior/Release/
+codewarrior/Debug/

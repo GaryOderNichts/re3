@@ -1,4 +1,4 @@
-#define WITH_D3D
+#define WITHD3D
 #include "common.h"
 
 #ifdef SCREEN_DROPLETS
@@ -391,7 +391,7 @@ void
 ScreenDroplets::RegisterSplash(CParticleObject *pobj)
 {
 	CVector dist = pobj->GetPosition() - ms_prevCamPos;
-	if(dist.MagnitudeSqr() < 20.0f){
+	if(dist.MagnitudeSqr() < 50.0f){	// 20 originally
 		ms_splashDuration = 14;
 		ms_splashObject = pobj;
 	}

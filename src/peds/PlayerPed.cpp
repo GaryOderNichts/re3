@@ -229,7 +229,7 @@ CPlayerPed::SetInitialState(void)
 	m_nAdrenalineTime = 0;
 	CTimer::SetTimeScale(1.0f);
 	m_pSeekTarget = nil;
-	m_vecSeekPos = { 0.0f, 0.0f, 0.0f };
+	m_vecSeekPos = CVector(0.0f, 0.0f, 0.0f);
 	m_fleeFromPosX = 0.0f;
 	m_fleeFromPosY = 0.0f;
 	m_fleeFrom = nil;
@@ -628,20 +628,21 @@ CPlayerPed::ProcessWeaponSwitch(CPad *padUsed)
 				}
 			}
 		}
+	// Out of ammo, switch to another weapon
 	} else if (CWeaponInfo::GetWeaponInfo((eWeaponType)m_currentWeapon)->m_eWeaponFire != WEAPON_FIRE_MELEE) {
 		if (GetWeapon(m_currentWeapon).m_nAmmoTotal <= 0) {
-			if (TheCamera.PlayerWeaponMode.Mode != CCam::MODE_M16_1STPERSON
-				&& TheCamera.PlayerWeaponMode.Mode != CCam::MODE_SNIPER
-				&& TheCamera.PlayerWeaponMode.Mode != CCam::MODE_ROCKETLAUNCHER) {
+			if (TheCamera.PlayerWeaponMode.Mode == CCam::MODE_M16_1STPERSON
+				|| TheCamera.PlayerWeaponMode.Mode == CCam::MODE_SNIPER
+				|| TheCamera.PlayerWeaponMode.Mode == CCam::MODE_ROCKETLAUNCHER)
+				return;
 
-				for (m_nSelectedWepSlot = m_currentWeapon - 1; m_nSelectedWepSlot >= 0; --m_nSelectedWepSlot) {
-					if (m_nSelectedWepSlot == WEAPONTYPE_BASEBALLBAT && HasWeapon(WEAPONTYPE_BASEBALLBAT)
-						|| GetWeapon(m_nSelectedWepSlot).m_nAmmoTotal > 0 && m_nSelectedWepSlot != WEAPONTYPE_MOLOTOV && m_nSelectedWepSlot != WEAPONTYPE_GRENADE) {
-						goto switchDetectDone;
-					}
+			for (m_nSelectedWepSlot = m_currentWeapon - 1; m_nSelectedWepSlot >= 0; --m_nSelectedWepSlot) {
+				if (m_nSelectedWepSlot == WEAPONTYPE_BASEBALLBAT && HasWeapon(WEAPONTYPE_BASEBALLBAT)
+					|| GetWeapon(m_nSelectedWepSlot).m_nAmmoTotal > 0 && m_nSelectedWepSlot != WEAPONTYPE_MOLOTOV && m_nSelectedWepSlot != WEAPONTYPE_GRENADE) {
+					goto switchDetectDone;
 				}
-				m_nSelectedWepSlot = WEAPONTYPE_UNARMED;
 			}
+			m_nSelectedWepSlot = WEAPONTYPE_UNARMED;
 		}
 	}
 
@@ -1135,7 +1136,7 @@ CPlayerPed::ProcessPlayerWeapon(CPad *padUsed)
 #ifdef FREE_CAM
 		else if ((CCamera::bFreeCam && weaponInfo->m_eWeaponFire == WEAPON_FIRE_MELEE) || (weaponInfo->IsFlagSet(WEAPONFLAG_CANAIM) && !CCamera::m_bUseMouse3rdPerson)) {
 #else
-		else if (weaponInfo->m_bCanAim && !CCamera::m_bUseMouse3rdPerson) {
+		else if (weaponInfo->IsFlagSet(WEAPONFLAG_CANAIM) && !CCamera::m_bUseMouse3rdPerson) {
 #endif
 			if (padUsed->TargetJustDown())
 				FindWeaponLockOnTarget();

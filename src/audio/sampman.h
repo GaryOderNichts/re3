@@ -1,5 +1,4 @@
 #pragma once
-#include "common.h"
 #include "AudioSamples.h"
 
 #define MAX_VOLUME 127
@@ -222,7 +221,7 @@ extern uint32 BankStartOffset[MAX_SFX_BANKS];
 extern int defaultProvider;
 #endif
 
-#ifdef AUDIO_OPUS
+#if defined(OPUS_AUDIO_PATHS)
 static char StreamedNameTable[][25] = {
     "AUDIO\\HEAD.OPUS",    "AUDIO\\CLASS.OPUS",   "AUDIO\\KJAH.OPUS",    "AUDIO\\RISE.OPUS",    "AUDIO\\LIPS.OPUS",    "AUDIO\\GAME.OPUS",
     "AUDIO\\MSX.OPUS",     "AUDIO\\FLASH.OPUS",   "AUDIO\\CHAT.OPUS",    "AUDIO\\HEAD.OPUS",    "AUDIO\\POLICE.OPUS",  "AUDIO\\CITY.OPUS",
@@ -258,9 +257,9 @@ static char StreamedNameTable[][25] = {
     "AUDIO\\door_2.OPUS",  "AUDIO\\door_3.OPUS",  "AUDIO\\door_4.OPUS",  "AUDIO\\door_5.OPUS",  "AUDIO\\door_6.OPUS",  "AUDIO\\t3_a.OPUS",
     "AUDIO\\t3_b.OPUS",    "AUDIO\\t3_c.OPUS",    "AUDIO\\k1_b.OPUS",    "AUDIO\\cat1.OPUS"};
 #else
+#if defined(PS2_AUDIO_PATHS)
 static char StreamedNameTable[][25]=
 {
-#ifdef PS2_AUDIO
 	"AUDIO\\MUSIC\\HEAD.VB",
 	"AUDIO\\MUSIC\\CLASS.VB",
 	"AUDIO\\MUSIC\\KJAH.VB",
@@ -357,6 +356,8 @@ static char StreamedNameTable[][25]=
 	"AUDIO\\MUSIC\\MISCOM.VB",
 	"AUDIO\\MUSIC\\END.VB",
 #else
+static char StreamedNameTable[][25] =
+{
 	"AUDIO\\HEAD.WAV",
 	"AUDIO\\CLASS.WAV",
 	"AUDIO\\KJAH.WAV",

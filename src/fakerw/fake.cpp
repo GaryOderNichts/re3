@@ -1,5 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
-#define WITH_D3D
+#define WITH_D3D // not WITHD3D, so it's librw define
 #include <rwcore.h>
 #include <rpworld.h>
 #include <rpmatfx.h>
@@ -14,7 +14,7 @@
 using namespace rw;
 
 RwUInt8 RwObjectGetType(const RwObject *obj) { return obj->type; }
-
+RwFrame* rwObjectGetParent(const RwObject *obj) { return (RwFrame*)obj->parent; }
 
 void *RwMalloc(size_t size) { return engine->memfuncs.rwmalloc(size, 0); }
 void *RwCalloc(size_t numObj, size_t sizeObj) {
@@ -962,3 +962,12 @@ RtCharset   *RtCharsetSetColors(RtCharset * charSet, const RwRGBA * foreGround, 
 RtCharset   *RtCharsetGetDesc(RtCharset * charset, RtCharsetDesc * desc) { *desc = charset->desc; return charset; }
 RtCharset   *RtCharsetCreate(const RwRGBA * foreGround, const RwRGBA * backGround) { return Charset::create(foreGround, backGround); }
 RwBool       RtCharsetDestroy(RtCharset * charSet) { charSet->destroy(); return true; }
+
+
+
+#include <rpanisot.h>
+
+RwInt8      RpAnisotGetMaxSupportedMaxAnisotropy(void) { return rw::getMaxSupportedMaxAnisotropy(); }
+RwTexture    *RpAnisotTextureSetMaxAnisotropy(RwTexture *tex, RwInt8 val) { tex->setMaxAnisotropy(val); return tex; }
+RwInt8       RpAnisotTextureGetMaxAnisotropy(RwTexture *tex) { return tex->getMaxAnisotropy(); }
+RwBool       RpAnisotPluginAttach(void) { rw::registerAnisotropyPlugin(); return true; }

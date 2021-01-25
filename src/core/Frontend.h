@@ -494,6 +494,7 @@ struct CCustomScreenLayout {
 struct CCFO
 {
 	int8 *value;
+	const char *saveCat;
 	const char *save;
 };
 
@@ -505,18 +506,21 @@ struct CCFOSelect : CCFO
 	int8 displayedValue; // only if onlyApplyOnEnter enabled for now
 	int8 lastSavedValue; // only if onlyApplyOnEnter enabled
 	ChangeFunc changeFunc;
+	bool disableIfGameLoaded;
 
 	CCFOSelect() {};
-	CCFOSelect(int8* value, const char* save, const char** rightTexts, int8 numRightTexts, bool onlyApplyOnEnter, ChangeFunc changeFunc){
+	CCFOSelect(int8* value, const char* saveCat, const char* save, const char** rightTexts, int8 numRightTexts, bool onlyApplyOnEnter, ChangeFunc changeFunc = nil, bool disableIfGameLoaded = false){
 		this->value = value;
 		if (value)
 			this->lastSavedValue = this->displayedValue = *value;
 
+		this->saveCat = saveCat;
 		this->save = save;
 		this->rightTexts = (char**)rightTexts;
 		this->numRightTexts = numRightTexts;
 		this->onlyApplyOnEnter = onlyApplyOnEnter;
 		this->changeFunc = changeFunc;
+		this->disableIfGameLoaded = disableIfGameLoaded;
 	}
 };
 
@@ -526,8 +530,9 @@ struct CCFODynamic : CCFO
 	ButtonPressFunc buttonPressFunc;
 
 	CCFODynamic() {};
-	CCFODynamic(int8* value, const char* save, DrawFunc drawFunc, ButtonPressFunc buttonPressFunc){
+	CCFODynamic(int8* value, const char* saveCat, const char* save, DrawFunc drawFunc, ButtonPressFunc buttonPressFunc){
 		this->value = value;
+		this->saveCat = saveCat;
 		this->save = save;
 		this->drawFunc = drawFunc;
 		this->buttonPressFunc = buttonPressFunc;
