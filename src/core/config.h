@@ -141,8 +141,6 @@ enum Config {
 	NUM_EXPLOSIONS = 48,
 };
 
-#define IO_BUFFER_SIZE 128*1024
-
 // We don't expect to compile for PS2 or Xbox
 // but it might be interesting for documentation purposes
 #define GTA_PC
@@ -408,6 +406,16 @@ enum Config {
 	#define PC_PARTICLE
 	#define VC_PED_PORTS // To not process collisions always. But should be tested if that's really beneficial
 	#define VC_RAIN_NERF // Reduces number of rain particles
+#endif
+
+#ifdef __WIIU__
+#define KEEP_FRONTEND_LOADED
+#define BUFFER_FILES
+#endif
+
+#ifdef BUFFER_FILES
+#define IO_BUFFER_SIZE (128*1024)
+#define INI_BUFFER_SIZE (8*1024) // 8k should be enough for the ini file
 #endif
 
 #if defined __MWERKS__ || defined VANILLA_DEFINES

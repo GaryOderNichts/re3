@@ -399,7 +399,6 @@ public:
 };
 
 #ifdef AUDIO_OAL_USE_SNDFILE
-#if 1
 static sf_count_t sndfile_vio_get_filelen(void* user_data)
 {
 	int32 pos = ftell((FILE*)user_data);
@@ -528,7 +527,8 @@ public:
 		return size;
 	}
 };
-#else
+
+#if DR_WAV_IMPLEMENTATION
 static size_t drwav_read_replacement(void* pUserData, void* pBufferOut, size_t bytesToRead)
 {
 	return fread(pBufferOut, 1, bytesToRead, (FILE*)pUserData);
@@ -1156,7 +1156,7 @@ CStream::CStream(char *filename, ALuint *sources, ALuint (&buffers)[NUM_STREAMBU
 	if (!strcasecmp(&m_aFilename[strlen(m_aFilename) - strlen(".wav")], ".wav"))
 #ifdef AUDIO_OAL_USE_SNDFILE
 		m_pSoundFile = new CSndFile(m_aFilename);
-#elif 0
+#elif defined(DR_WAV_IMPLEMENTATION)
 		m_pSoundFile = new CDrWav(m_aFilename);
 #else
 		m_pSoundFile = new CWavFile(m_aFilename);

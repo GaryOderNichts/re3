@@ -33,6 +33,9 @@
 #include <cstdio>       // for std::FILE
 #include <algorithm>    // for std::find_if
 #include <functional>   // for std::function
+#ifdef BUFFER_FILES
+#include <malloc.h>     // for memalign
+#endif
 
 namespace linb
 {
@@ -193,6 +196,11 @@ namespace linb
                     string_type null_string;
                     size_type pos;
                     
+#ifdef BUFFER_FILES
+                    char* buffer = (char*) memalign(0x40, INI_BUFFER_SIZE);
+                    setvbuf(f, buffer, _IOFBF, INI_BUFFER_SIZE);
+#endif
+
                     // Trims an string
                     auto trim = [](string_type& s, bool trimLeft, bool trimRight) -> string_type&
                     {
@@ -264,6 +272,9 @@ namespace linb
                     }
                     
                     fclose(f);
+#ifdef BUFFER_FILES
+                    free(buffer);
+#endif
                     return true;
                 }
                 return false;
@@ -276,6 +287,10 @@ namespace linb
             {
                 if(FILE* f = fopen(filename, "w"))
                 {
+#ifdef BUFFER_FILES
+                    char* buffer = (char*) memalign(0x40, INI_BUFFER_SIZE);
+                    setvbuf(f, buffer, _IOFBF, INI_BUFFER_SIZE);
+#endif
                     bool first = true;
                     for(auto& sec : this->data)
                     {
@@ -290,6 +305,9 @@ namespace linb
                         }
                     }
                     fclose(f);
+#ifdef BUFFER_FILES
+                    free(buffer);
+#endif
                     return true;
                 }
                 return false;
