@@ -3576,8 +3576,14 @@ CMenuManager::InitialiseChangedLanguageSettings()
 void
 CMenuManager::LoadAllTextures()
 {
+#ifndef KEEP_FRONTEND_LOADED
 	if (m_bSpritesLoaded)
 		return;
+#else
+	if (m_bFrontendLoaded)
+		return;
+	m_bFrontendLoaded = true;
+#endif
 
 	CentreMousePointer();
 	DMAudio.ChangeMusicMode(MUSICMODE_FRONTEND);
@@ -3599,6 +3605,11 @@ CMenuManager::LoadAllTextures()
 	} else if (m_PrefsRadioStation > CHATTERBOX)
 		m_PrefsRadioStation = CGeneral::GetRandomNumber() % (CHATTERBOX + 1);
 	
+#ifdef KEEP_FRONTEND_LOADED
+	if (m_bSpritesLoaded)
+		return;
+#endif
+
 	CFileMgr::SetDir("");
 	//CFileMgr::SetDir("");
 	CTimer::Stop();
@@ -5673,29 +5684,41 @@ CMenuManager::SwitchMenuOnAndOff()
 }
 
 void
+#ifdef KEEP_FRONTEND_LOADED
+CMenuManager::UnloadTextures(bool forceUnload)
+#else
 CMenuManager::UnloadTextures()
-{
-	if (!m_bSpritesLoaded)
-		return;
-
-	printf("REMOVE frontend\n");
-	for (int i = 0; i < ARRAY_SIZE(FrontendFilenames); ++i)
-		m_aFrontEndSprites[i].Delete();
-
-	int frontend = CTxdStore::FindTxdSlot("frontend");
-	CTxdStore::RemoveTxd(frontend);
-
-	printf("REMOVE menu textures\n");
-	for (int i = 0; i < ARRAY_SIZE(MenuFilenames); ++i)
-		m_aMenuSprites[i].Delete();
-#ifdef MENU_MAP
-	for (int i = 0; i < ARRAY_SIZE(MapFilenames); ++i)
-		m_aMapSprites[i].Delete();
 #endif
-	int menu = CTxdStore::FindTxdSlot("menu");
-	CTxdStore::RemoveTxd(menu);
+{
+#ifdef KEEP_FRONTEND_LOADED
+	if (forceUnload)
+#endif
+	{
+		if (!m_bSpritesLoaded)
+			return;
 
-	m_bSpritesLoaded = false;
+		printf("REMOVE frontend\n");
+		for (int i = 0; i < ARRAY_SIZE(FrontendFilenames); ++i)
+			m_aFrontEndSprites[i].Delete();
+
+		int frontend = CTxdStore::FindTxdSlot("frontend");
+		CTxdStore::RemoveTxd(frontend);
+
+		printf("REMOVE menu textures\n");
+		for (int i = 0; i < ARRAY_SIZE(MenuFilenames); ++i)
+			m_aMenuSprites[i].Delete();
+#ifdef MENU_MAP
+		for (int i = 0; i < ARRAY_SIZE(MapFilenames); ++i)
+			m_aMapSprites[i].Delete();
+#endif
+		int menu = CTxdStore::FindTxdSlot("menu");
+		CTxdStore::RemoveTxd(menu);
+
+		m_bSpritesLoaded = false;
+	}
+#ifdef KEEP_FRONTEND_LOADED
+	m_bFrontendLoaded = false;
+#endif
 }
 
 void

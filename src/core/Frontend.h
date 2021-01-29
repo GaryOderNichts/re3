@@ -601,6 +601,9 @@ public:
  char field_455;
 	bool m_bStartWaitingForKeyBind;
 	bool m_bSpritesLoaded;
+#ifdef KEEP_FRONTEND_LOADED
+	bool m_bFrontendLoaded;
+#endif
 	CSprite2d m_aFrontEndSprites[NUM_FE_SPRITES];
 	CSprite2d m_aMenuSprites[NUM_MENU_SPRITES];
  int32 field_518;
@@ -769,7 +772,11 @@ public:
 	float StretchX(float);
 	float StretchY(float);
 	void SwitchMenuOnAndOff();
+#ifdef KEEP_FRONTEND_LOADED
+	void UnloadTextures(bool forceUnload = false);
+#else
 	void UnloadTextures();
+#endif
 	void WaitForUserCD();
 	void PrintController();
 	int GetNumOptionsCntrlConfigScreens();

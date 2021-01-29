@@ -1301,6 +1301,10 @@ main(int argc, char *argv[])
 #endif
 	}
 	
+#ifdef KEEP_FRONTEND_LOADED
+	// since we kept our frontend loaded free the textures now
+	FrontEndMenuManager.UnloadTextures(true);
+#endif
 
 #ifndef MASTER
 	if ( gbModelViewer )
