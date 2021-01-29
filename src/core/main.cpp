@@ -201,6 +201,9 @@ DoRWStuffStartOfFrame(int16 TopRed, int16 TopGreen, int16 TopBlue, int16 BottomR
 	if(!RsCameraBeginUpdate(Scene.camera))
 		return false;
 
+#ifdef FIX_BUGS
+	CSprite2d::SetRecipNearClip();
+#endif
 	CSprite2d::InitPerFrame();
 
 	if(Alpha != 0)
@@ -1107,8 +1110,13 @@ DisplayGameDebugText()
 #endif // #ifdef DRAW_GAME_VERSION_TEXT
 
 	FrameSamples++;
+#ifdef FIX_BUGS
+	FramesPerSecondCounter += frameTime / 1000.f; // convert to seconds
+	FramesPerSecond = FrameSamples / FramesPerSecondCounter;
+#else
 	FramesPerSecondCounter += 1000.0f / (CTimer::GetTimeStepNonClippedInSeconds() * 1000.0f);	
 	FramesPerSecond = FramesPerSecondCounter / FrameSamples;
+#endif
 	
 	if ( FrameSamples > 30 )
 	{

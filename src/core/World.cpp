@@ -360,7 +360,7 @@ CWorld::ProcessLineOfSightSectorList(CPtrList &list, const CColLine &line, CColP
 			} else if(e->bUsesCollision)
 				colmodel = CModelInfo::GetModelInfo(e->GetModelIndex())->GetColModel();
 
-			if(colmodel && CCollision::ProcessLineOfSight(line, e->GetMatrix(), *colmodel, point, dist,
+			if(colmodel && CCollision::ProcessLineOfSight(line, e->GetMatrix(), *colmodel, point, mindist,
 			                                              ignoreSeeThrough))
 				entity = e;
 		}
@@ -445,7 +445,7 @@ CWorld::ProcessVerticalLineSectorList(CPtrList &list, const CColLine &line, CCol
 			e->m_scanCode = GetCurrentScanCode();
 
 			colmodel = CModelInfo::GetModelInfo(e->GetModelIndex())->GetColModel();
-			if(CCollision::ProcessVerticalLine(line, e->GetMatrix(), *colmodel, point, dist,
+			if(CCollision::ProcessVerticalLine(line, e->GetMatrix(), *colmodel, point, mindist,
 			                                   ignoreSeeThrough, poly))
 				entity = e;
 		}
