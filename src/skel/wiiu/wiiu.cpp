@@ -2,9 +2,6 @@
 
 #include "wiiu.h"
 #include <whb/proc.h>
-#include <whb/sdcard.h>
-#include <whb/crash.h>
-
 #include <whb/log.h>
 #include <whb/log_udp.h>
 
@@ -828,6 +825,8 @@ _InputTranslateShiftKeyUpDown(RsKeyCodes *rs) {
 	RsKeyboardEventHandler(rshiftStatus ? rsKEYDOWN : rsKEYUP, &(*rs = rsRSHIFT));
 }
 
+extern "C" void wiiu_init_crashhandler(void);
+
 /*
  *****************************************************************************
  */
@@ -842,11 +841,12 @@ main(int argc, char *argv[])
 #endif
 
 	WHBProcInit();
-	WHBInitCrashHandler();
-
+	
 #ifdef _DEBUG_BUILD_
 	WHBLogUdpInit();
 #endif
+
+	wiiu_init_crashhandler();
 
 	WHBLogPrintf("RE3 Wii U started");
 
