@@ -200,6 +200,14 @@ CMBlur::CreateImmediateModeData(RwCamera *cam, RwRect *rect)
 	RwIm2DVertexSetU(&Vertex[3], 1.0f, 1.0f/RwCameraGetNearClipPlane(cam));
 	RwIm2DVertexSetV(&Vertex[3], 0.0f, 1.0f/RwCameraGetNearClipPlane(cam));
 	RwIm2DVertexSetIntRGBA(&Vertex[3], 255, 255, 255, 255);
+
+#ifdef __WIIU__
+	// The texture from the gx2 rasterRenderFast are currently mirrored so flip our Vs
+	RwIm2DVertexSetV(&Vertex[0], 1.0f, 1.0f/RwCameraGetNearClipPlane(cam));
+	RwIm2DVertexSetV(&Vertex[1], 0.0f, 1.0f/RwCameraGetNearClipPlane(cam));
+	RwIm2DVertexSetV(&Vertex[2], 0.0f, 1.0f/RwCameraGetNearClipPlane(cam));
+	RwIm2DVertexSetV(&Vertex[3], 1.0f, 1.0f/RwCameraGetNearClipPlane(cam));
+#endif
 }
 
 void

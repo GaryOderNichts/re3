@@ -3674,7 +3674,9 @@ CMenuManager::LoadSettings()
 	int fileHandle = CFileMgr::OpenFile("gta3.set", "r");
 
 	int32 prevLang = m_PrefsLanguage;
-#if GTA_VERSION >= GTA3_PC_11
+#ifdef __WIIU__
+	CMBlur::BlurOn = false;
+#elif GTA_VERSION >= GTA3_PC_11
 	CMBlur::BlurOn = (_dwOperatingSystemVersion != OS_WIN98);
 #else
 	CMBlur::BlurOn = true;
@@ -5038,6 +5040,7 @@ CMenuManager::ProcessButtonPresses(void)
 #endif
 						m_PrefsShowSubtitles = true;
 						m_nDisplayVideoMode = m_nPrefsVideoMode;
+#ifndef __WIIU__
 #if GTA_VERSION >= GTA3_PC_11
 						if (_dwOperatingSystemVersion == OS_WIN98) {
 							CMBlur::BlurOn = false;
@@ -5048,6 +5051,10 @@ CMenuManager::ProcessButtonPresses(void)
 						}
 #else
 						CMBlur::BlurOn = true;
+#endif
+#else
+						CMBlur::BlurOn = false;
+						CMBlur::MotionBlurClose();
 #endif
 #ifdef CUSTOM_FRONTEND_OPTIONS
 						extern void RestoreDefGraphics(int8);
