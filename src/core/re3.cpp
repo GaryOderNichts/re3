@@ -984,7 +984,7 @@ const int   re3_buffsize = 1024;
 static char re3_buff[re3_buffsize];
 #endif
 
-#ifndef MASTER
+#if !defined(MASTER) || defined(__WIIU__)
 void re3_assert(const char *expr, const char *filename, unsigned int lineno, const char *func)
 {
 #ifdef _WIN32
@@ -1034,7 +1034,10 @@ void re3_assert(const char *expr, const char *filename, unsigned int lineno, con
 	abort();
 #elif __WIIU__
 	WHBLogPrintf("\nRE3 ASSERT FAILED\n\tFile: %s\n\tLine: %d\n\tFunction: %s\n\tExpression: %s\n",filename,lineno,func,expr);
-	OSFatal("RE3 ASSERT FAILED");
+	
+	char buf[2048];
+	sprintf(buf, "RE3 ASSERT FAILED\nFile: %s\nLine: %d\nFunction: %s\nExpression: %s\n",filename,lineno,func,expr);
+	OSFatal(buf);
 #else
 	// TODO
 	printf("\nRE3 ASSERT FAILED\n\tFile: %s\n\tLine: %d\n\tFunction: %s\n\tExpression: %s\n",filename,lineno,func,expr);

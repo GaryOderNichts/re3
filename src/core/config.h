@@ -156,7 +156,7 @@ enum Config {
 
 // This is enabled for all released games except mobile
 // any debug stuff that is only left in mobile, is not in MASTER
-//#define MASTER
+#define MASTER
 
 // once and for all:
 // pc: FINAL & MASTER

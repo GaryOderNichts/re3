@@ -367,6 +367,9 @@ void re3_usererror(const char *format, ...);
 #define DEV(f, ...)   re3_debug("[DEV]: " f, ## __VA_ARGS__)
 #endif
 
+#define __FILENAME_X__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILENAME_X__)
+
 #ifdef __MWERKS__
 void debug(char *f, ...);
 void Error(char *f, ...);
@@ -376,7 +379,7 @@ __inline__ void TRACE(char *f, ...) { } // this is re3 only, and so the function
 #define debug(f, ...) re3_debug("[DBG]: " f, ## __VA_ARGS__)
 #define Error(f, ...) re3_debug("[ERROR]: " f, ## __VA_ARGS__)
 #ifndef MASTER
-#define TRACE(f, ...) re3_trace(__FILE__, __LINE__, __FUNCTION__, f, ## __VA_ARGS__)
+#define TRACE(f, ...) re3_trace(__FILENAME__, __LINE__, __FUNCTION__, f, ## __VA_ARGS__)
 #define USERERROR(f, ...) re3_usererror(f, ## __VA_ARGS__)
 #else
 #define TRACE(f, ...)
@@ -385,8 +388,8 @@ __inline__ void TRACE(char *f, ...) { } // this is re3 only, and so the function
 #endif
 
 #undef assert
-#ifndef MASTER
-#define assert(_Expression) (void)( (!!(_Expression)) || (re3_assert(#_Expression, __FILE__, __LINE__, __FUNCTION__), 0) )
+#if !defined(MASTER) || defined(__WIIU__)
+#define assert(_Expression) (void)( (!!(_Expression)) || (re3_assert(#_Expression, __FILENAME__, __LINE__, __FUNCTION__), 0) )
 #else
 #define assert(_Expression)
 #endif
