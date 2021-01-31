@@ -3,7 +3,6 @@
 
 #ifdef AUDIO_OAL
 
-#ifndef __WIIU__
 /*
  * When linking to a static openal-soft library,
  * the extension function inside the openal library conflict with the variables here.
@@ -50,11 +49,9 @@ LPALGETFILTERFV alGetFilterfv;
 
 using namespace re3_openal;
 
-#endif
 
 void EFXInit()
 {
-#ifndef __WIIU__
 	/* Define a macro to help load the function pointers. */
 	/* Prefix all the function pointers with re* to avoid linking issue with the library functions */
 #define LOAD_PROC(T, x)  ((x) = (T)alGetProcAddress(#x))
@@ -94,7 +91,6 @@ LOAD_PROC(LPALGENEFFECTS, alGenEffects);
 	LOAD_PROC(LPALGETAUXILIARYEFFECTSLOTF, alGetAuxiliaryEffectSlotf);
 	LOAD_PROC(LPALGETAUXILIARYEFFECTSLOTFV, alGetAuxiliaryEffectSlotfv);
 #undef LOAD_PROC
-#endif
 }
 
 void SetEffectsLevel(ALuint uiFilter, float level)

@@ -11,9 +11,7 @@ void EFX_Set(ALuint effect, const EAXLISTENERPROPERTIES *props);
 void EAX3_SetReverbMix(ALuint filter, float mix);
 void SetEffectsLevel(ALuint uiFilter, float level);
 
-#ifndef __WIIU__
 namespace re3_openal {
-#endif
 
 extern LPALGENEFFECTS alGenEffects;
 extern LPALDELETEEFFECTS alDeleteEffects;
@@ -49,10 +47,8 @@ extern LPALGETFILTERIV alGetFilteriv;
 extern LPALGETFILTERF alGetFilterf;
 extern LPALGETFILTERFV alGetFilterfv;
 
-#ifndef __WIIU__
 }
 
 using namespace re3_openal;
-#endif
 
 #endif
