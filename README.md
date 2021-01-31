@@ -8,7 +8,8 @@ For instructions take a look at the GBATemp thread here: https://gbatemp.net/thr
 
 ## Building
 To build this project make sure you install the requried packages:  
-`(dkp-)pacman -S ppc-mpg123 wiiu-sdl2 wut`  
+`(dkp-)pacman -S ppc-mpg123 wut`  
+Build [SDL2 from yawut](https://github.com/yawut/SDL/tree/wiiu-2.0.9) to avoid issues with crashes and exiting.  
 You also need to build [libsndfile](https://github.com/libsndfile/libsndfile). To configure libsndfile for the Wii U take a look at this gist: https://gist.github.com/GaryOderNichts/475edaf03ff08ba100840608f92eade8  
 Then clone this repo using `git clone --recursive https://github.com/GaryOderNichts/re3` and build using `make`.  
 To build the channel edit `CHANNEL_BUILD := 0` to `CHANNEL_BUILD := 1` in the `Makefile`.
