@@ -984,7 +984,11 @@ cSampleManager::Initialise(void)
 		add_providers();
 
 #ifdef AUDIO_CACHE
+#ifdef WIIU_CHANNEL
+	FILE *cacheFile = fcaseopen("/vol/external01/wiiu/apps/re3/audio/sound.cache", "rb");
+#else
 	FILE *cacheFile = fcaseopen("audio\\sound.cache", "rb");
+#endif
 	if (cacheFile) {
 		debug("Loadind audio cache (If game crashes around here, then your cache is corrupted, remove audio/sound.cache)\n");
 		fread(nStreamLength, sizeof(uint32), TOTAL_STREAMED_SOUNDS, cacheFile);
@@ -1007,7 +1011,11 @@ cSampleManager::Initialise(void)
 				USERERROR("Can't open '%s'\n", StreamedNameTable[i]);
 		}
 #ifdef AUDIO_CACHE
+#ifdef WIIU_CHANNEL
+		cacheFile = fcaseopen("/vol/external01/wiiu/apps/re3/audio/sound.cache", "wb");
+#else
 		cacheFile = fcaseopen("audio\\sound.cache", "wb");
+#endif
 		if(cacheFile) {
 			debug("Saving audio cache\n");
 			fwrite(nStreamLength, sizeof(uint32), TOTAL_STREAMED_SOUNDS, cacheFile);

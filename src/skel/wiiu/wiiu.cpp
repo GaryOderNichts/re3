@@ -857,6 +857,7 @@ main(int argc, char *argv[])
 	_psCreateFolder("/vol/external01/wiiu/apps/re3");
 	_psCreateFolder("/vol/external01/wiiu/apps/re3/models");
 	_psCreateFolder("/vol/external01/wiiu/apps/re3/data");
+	_psCreateFolder("/vol/external01/wiiu/apps/re3/audio");
 
 	// read from content
 	chdir("/vol/content");

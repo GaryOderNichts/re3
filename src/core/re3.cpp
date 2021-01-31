@@ -356,7 +356,11 @@ void SaveINIControllerSettings()
 
 bool LoadINISettings()
 {
+#ifdef WIIU_CHANNEL
+	if (!cfg.load_file("/vol/external01/wiiu/apps/re3/re3.ini"))
+#else
 	if (!cfg.load_file("re3.ini"))
+#endif
 		return false;
 
 #ifdef IMPROVED_VIDEOMODE
@@ -514,7 +518,11 @@ void SaveINISettings()
 	}
 #endif
 
+#ifdef WIIU_CHANNEL
+	cfg.write_file("/vol/external01/wiiu/apps/re3/re3.ini");
+#else
 	cfg.write_file("re3.ini");
+#endif
 }
 
 #endif
