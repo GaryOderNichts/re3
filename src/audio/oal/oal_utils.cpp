@@ -53,7 +53,6 @@ using namespace re3_openal;
 void EFXInit()
 {
 	/* Define a macro to help load the function pointers. */
-	/* Prefix all the function pointers with re* to avoid linking issue with the library functions */
 #define LOAD_PROC(T, x)  ((x) = (T)alGetProcAddress(#x))
 LOAD_PROC(LPALGENEFFECTS, alGenEffects);
 	LOAD_PROC(LPALDELETEEFFECTS, alDeleteEffects);

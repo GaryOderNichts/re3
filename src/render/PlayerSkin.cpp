@@ -32,10 +32,8 @@ FindPlayerDff(uint32 &offset, uint32 &size)
 	do {
 		if (!CFileMgr::Read(file, (char*)&info, sizeof(CDirectory::DirectoryInfo)))
 			return;
-#ifdef BIGENDIAN
-		info.offset = BSWAP32(info.offset);
-		info.size = BSWAP32(info.size);
-#endif
+		memLittle32(&info.offset);
+		memLittle32(&info.size);
 	} while (strcasecmp("player.dff", info.name) != 0);
 
 	offset = info.offset;

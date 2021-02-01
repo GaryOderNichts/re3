@@ -218,9 +218,7 @@ CFileLoader::LoadCollisionFile(const char *filename)
 #else
 		assert(header.ident == 'LLOC');
 #endif
-#ifdef BIGENDIAN
-		header.size = BSWAP32(header.size);
-#endif
+		memLittle32(&header.size);
 		CFileMgr::Read(fd, (char*)work_buff, header.size);
 		memcpy(modelname, work_buff, 24);
 
@@ -248,19 +246,6 @@ CFileLoader::LoadCollisionModel(uint8 *buf, CColModel &model, char *modelname)
 {
 	int i;
 
-#ifndef BIGENDIAN
-	model.boundingSphere.radius = *(float*)(buf);
-	model.boundingSphere.center.x = *(float*)(buf+4);
-	model.boundingSphere.center.y = *(float*)(buf+8);
-	model.boundingSphere.center.z = *(float*)(buf+12);
-	model.boundingBox.min.x = *(float*)(buf+16);
-	model.boundingBox.min.y = *(float*)(buf+20);
-	model.boundingBox.min.z = *(float*)(buf+24);
-	model.boundingBox.max.x = *(float*)(buf+28);
-	model.boundingBox.max.y = *(float*)(buf+32);
-	model.boundingBox.max.z = *(float*)(buf+36);
-	model.numSpheres = *(int16*)(buf+40);
-#else
 	model.boundingSphere.radius = FLOATSWAP32(*(float*)(buf));
 	model.boundingSphere.center.x = FLOATSWAP32(*(float*)(buf+4));
 	model.boundingSphere.center.y = FLOATSWAP32(*(float*)(buf+8));
@@ -272,7 +257,6 @@ CFileLoader::LoadCollisionModel(uint8 *buf, CColModel &model, char *modelname)
 	model.boundingBox.max.y = FLOATSWAP32(*(float*)(buf+32));
 	model.boundingBox.max.z = FLOATSWAP32(*(float*)(buf+36));
 	model.numSpheres = (int16) BSWAP16(*(uint16*)(buf+40));
-#endif
 
 	buf += 44;
 	if(model.numSpheres > 0){
@@ -294,11 +278,7 @@ CFileLoader::LoadCollisionModel(uint8 *buf, CColModel &model, char *modelname)
 	}else
 		model.spheres = nil;
 
-#ifndef BIGENDIAN
-	model.numLines = *(int16*)buf;
-#else
 	model.numLines = (int16) BSWAP16(*(uint16*)buf);
-#endif
 	buf += 4;
 	if(model.numLines > 0){
 		model.lines = (CColLine*)RwMalloc(model.numLines*sizeof(CColLine));
@@ -322,11 +302,7 @@ CFileLoader::LoadCollisionModel(uint8 *buf, CColModel &model, char *modelname)
 	}else
 		model.lines = nil;
 
-#ifndef BIGENDIAN
-	model.numBoxes = *(int16*)buf;
-#else
 	model.numBoxes = (int16) BSWAP16(*(uint16*)buf);
-#endif
 	buf += 4;
 	if(model.numBoxes > 0){
 		model.boxes = (CColBox*)RwMalloc(model.numBoxes*sizeof(CColBox));
@@ -350,11 +326,7 @@ CFileLoader::LoadCollisionModel(uint8 *buf, CColModel &model, char *modelname)
 	}else
 		model.boxes = nil;
 
-#ifndef BIGENDIAN
-	int32 numVertices = *(int16*)buf;
-#else
 	int32 numVertices = (int16) BSWAP16(*(uint16*)buf);
-#endif
 	buf += 4;
 	if(numVertices > 0){
 		model.vertices = (CompressedVector*)RwMalloc(numVertices*sizeof(CompressedVector));
@@ -381,11 +353,7 @@ CFileLoader::LoadCollisionModel(uint8 *buf, CColModel &model, char *modelname)
 	}else
 		model.vertices = nil;
 
-#ifndef BIGENDIAN
-	model.numTriangles = *(int16*)buf;
-#else
 	model.numTriangles = (int16) BSWAP16(*(uint16*)buf);
-#endif
 	buf += 4;
 	if(model.numTriangles > 0){
 		model.triangles = (CColTriangle*)RwMalloc(model.numTriangles*sizeof(CColTriangle));

@@ -527,7 +527,7 @@ CMouseControllerState CMousePointerStateHelper::GetMouseSetUp()
 		}
 	}
 #elif __WIIU__
-// TODO: WIIU
+	// no mouse on the Wii U
 #else
 	// It seems there is no way to get number of buttons on mouse, so assign all buttons if we have mouse.
 	double xpos = 1.0f, ypos;
@@ -588,7 +588,7 @@ void CPad::UpdateMouse()
 		}
 	}
 #elif __WIIU__
-// TODO: wiiu
+	// no mouse on the Wii U
 #else
 	if ( IsForegroundApp() && PSGLOBAL(cursorIsInWindow) )
 	{

@@ -70,7 +70,6 @@ CText::Load(void)
 		type[3] = filedata[offset++];
 		sectlen = (int)filedata[offset+3]<<24 | (int)filedata[offset+2]<<16 |
 			(int)filedata[offset+1]<<8 | (int)filedata[offset+0];
-
 		offset += 4;
 		if(sectlen != 0){
 			if(strncmp(type, "TKEY", 4) == 0)
@@ -192,7 +191,7 @@ CKeyArray::Load(size_t length, uint8 *data, ssize_t *offset)
 
 #ifdef BIGENDIAN
 	for (i = 0; i < numEntries; i++)
-		entries[i].valueOffset = BSWAP32(entries[i].valueOffset);
+		memLittle32(&entries[i].valueOffset);
 #endif
 }
 
@@ -277,7 +276,7 @@ CData::Load(size_t length, uint8 *data, ssize_t *offset)
 
 #ifdef BIGENDIAN
 	for (i = 0; i < numChars; i++)
-		chars[i] = BSWAP16(chars[i]);
+		memLittle16(&chars[i]);
 #endif
 }
 

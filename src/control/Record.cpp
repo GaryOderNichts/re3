@@ -67,12 +67,6 @@ void CRecordDataForGame::SaveOrRetrieveDataForThisFrame(void)
 		uint8* pEndPtr = pController2;
 		if ((pDataBufferForFrame.m_nSizeOfPads[0] + pDataBufferForFrame.m_nSizeOfPads[1]) & 1)
 			pEndPtr += 2;
-#ifdef BIGENDIAN
-		// save as LE
-		pDataBufferForFrame.m_fTimeStep = FLOATSWAP32(pDataBufferForFrame.m_fTimeStep);
-		pDataBufferForFrame.m_nTimeInMilliseconds = BSWAP32(pDataBufferForFrame.m_nTimeInMilliseconds);
-		pDataBufferForFrame.m_nChecksum = BSWAP32(pDataBufferForFrame.m_nChecksum);
-#endif
 		CFileMgr::Write(FId, (char*)&pDataBufferForFrame, pEndPtr - (uint8*)&pDataBufferForFrame);
 		break;
 	}
@@ -81,11 +75,6 @@ void CRecordDataForGame::SaveOrRetrieveDataForThisFrame(void)
 			CPad::GetPad(0)->NewState.Clear();
 		else {
 			tGameBuffer* pData = (tGameBuffer*)pDataBufferPointer;
-#ifdef BIGENDIAN
-			pData->m_fTimeStep = FLOATSWAP32(pData->m_fTimeStep);
-			pData->m_nTimeInMilliseconds = BSWAP32(pData->m_nTimeInMilliseconds);
-			pData->m_nChecksum = BSWAP32(pData->m_nChecksum);
-#endif
 			CTimer::SetTimeInMilliseconds(pData->m_nTimeInMilliseconds);
 			CTimer::SetTimeStep(pData->m_fTimeStep);
 			uint8 size1 = pData->m_nSizeOfPads[0];

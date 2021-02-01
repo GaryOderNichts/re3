@@ -107,36 +107,33 @@ typedef uint16 bool16;
 typedef uint32 bool32;
 
 #ifdef BIGENDIAN
-inline float _floatswap32(float f)
-{
-	uint32_t _swapval = __builtin_bswap32(*(uint32_t*)&f);
-    return *(float*)&_swapval;
-}
-
 #define BSWAP32(x) __builtin_bswap32(x)
 #define BSWAP16(x) __builtin_bswap16(x)
+
+inline float _floatswap32(float f)
+{
+	uint32 _swapval = BSWAP32(*(uint32*)&f);
+    return *(float*)&_swapval;
+}
 #define FLOATSWAP32(x) _floatswap32(x)
-#define BSWAP_VECTOR(v) \
-	do { \
-	v.x = FLOATSWAP32(v.x); \
-	v.y = FLOATSWAP32(v.y); \
-	v.z = FLOATSWAP32(v.z); \
-	} while(0)
-#define BSWAP_MTX(m) \
-	do { \
-	BSWAP_VECTOR(m.right); \
-	BSWAP_VECTOR(m.up); \
-	BSWAP_VECTOR(m.at); \
-	BSWAP_VECTOR(m.pos); \
-	BSWAP32(m.flags); \
-	BSWAP32(m.pad1); \
-	BSWAP32(m.pad2); \
-	BSWAP32(m.pad3); \
-	} while(0)
+
+inline void _memLittle32(void* val)
+{
+	*(uint32*)val = BSWAP32(*(uint32*)val);
+}
+#define memLittle32(val) _memLittle32(val)
+
+inline void _memLittle16(void* val)
+{
+	*(uint16*)val = BSWAP16(*(uint16*)val);
+}
+#define memLittle16(val) _memLittle16(val)
 #else
 #define BSWAP32(x) (x)
 #define BSWAP16(x) (x)
 #define FLOATSWAP32(x) (x)
+#define memLittle32(val)
+#define memLittle16(val)
 #endif
 
 #if defined(_MSC_VER) || defined (__MWERKS__)

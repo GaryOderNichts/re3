@@ -1602,11 +1602,7 @@ void CRunningScript::CollectParameters(uint32* pIp, int16 total)
 		case ARGUMENT_GLOBALVAR:
 			varIndex = CTheScripts::Read2BytesFromScript(pIp);
 			script_assert(varIndex >= 8 && varIndex < CTheScripts::GetSizeOfVariableSpace());
-#ifndef BIGENDIAN
-			ScriptParams[i] = *((int32*)&CTheScripts::ScriptSpace[varIndex]);
-#else
 			ScriptParams[i] = BSWAP32(*((int32*)&CTheScripts::ScriptSpace[varIndex]));
-#endif
 			break;
 		case ARGUMENT_LOCALVAR:
 			varIndex = CTheScripts::Read2BytesFromScript(pIp);
@@ -1647,11 +1643,7 @@ int CRunningScript::CollectParameterForDebug(char* buf, bool& var)
 		var = true;
 		sprintf(tmpstr, " $%d", varIndex / 4);
 		strcat(buf, tmpstr);
-#ifndef BIGENDIAN
-		return *((int32*)&CTheScripts::ScriptSpace[varIndex]);
-#else
 		return BSWAP32(*((int32*)&CTheScripts::ScriptSpace[varIndex]));
-#endif
 	case ARGUMENT_LOCALVAR:
 		varIndex = CTheScripts::Read2BytesFromScript(&m_nIp);
 		script_assert(varIndex >= 0 && varIndex < ARRAY_SIZE(m_anLocalVariables));
@@ -1705,11 +1697,7 @@ int32 CRunningScript::CollectNextParameterWithoutIncreasingPC(uint32 ip)
 	case ARGUMENT_INT32:
 		return CTheScripts::Read4BytesFromScript(pIp);
 	case ARGUMENT_GLOBALVAR:
-#ifndef BIGENDIAN
-		return *((int32*)&CTheScripts::ScriptSpace[(uint16)CTheScripts::Read2BytesFromScript(pIp)]);
-#else
 		return BSWAP32(*((int32*)&CTheScripts::ScriptSpace[(uint16)CTheScripts::Read2BytesFromScript(pIp)]));
-#endif
 	case ARGUMENT_LOCALVAR:
 		return m_anLocalVariables[CTheScripts::Read2BytesFromScript(pIp)];
 	case ARGUMENT_INT8:
@@ -1730,12 +1718,7 @@ void CRunningScript::StoreParameters(uint32* pIp, int16 number)
 	for (int16 i = 0; i < number; i++){
 		switch (CTheScripts::Read1ByteFromScript(pIp)) {
 		case ARGUMENT_GLOBALVAR:
-#ifndef BIGENDIAN
-			*(int32*)&CTheScripts::ScriptSpace[(uint16)CTheScripts::Read2BytesFromScript(pIp)] = ScriptParams[i];
-#else
-			// store as LE
 			*(int32*)&CTheScripts::ScriptSpace[(uint16)CTheScripts::Read2BytesFromScript(pIp)] = BSWAP32(ScriptParams[i]);
-#endif
 			break;
 		case ARGUMENT_LOCALVAR:
 			m_anLocalVariables[CTheScripts::Read2BytesFromScript(pIp)] = ScriptParams[i];
@@ -2034,11 +2017,7 @@ CRunningScript* CTheScripts::StartTestScript()
 
 bool CTheScripts::IsPlayerOnAMission()
 {
-#ifndef BIGENDIAN
-	return OnAMissionFlag && *(int32*)&ScriptSpace[OnAMissionFlag] == 1;
-#else
 	return OnAMissionFlag && BSWAP32(*(int32*)&ScriptSpace[OnAMissionFlag]) == 1;
-#endif
 }
 
 void CRunningScript::Process()

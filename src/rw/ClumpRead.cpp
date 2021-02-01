@@ -35,9 +35,7 @@ GeometryListStreamRead1(RwStream *stream, rpGeometryList *geomlist)
 	if(RwStreamRead(stream, &numGeoms, 4) != 4)
 		return nil;
 
-#ifdef BIGENDIAN
-	numGeoms = BSWAP32(numGeoms);
-#endif
+	memLittle32(&numGeoms);
 
 	numberGeometrys = numGeoms/2;
 	geomlist->numGeoms = numGeoms;
@@ -106,12 +104,10 @@ ClumpAtomicStreamRead(RwStream *stream, rwFrameList *frmList, rpGeometryList *ge
 	if(RwStreamRead(stream, &a, size) != size)
 		return nil;
 
-#ifdef BIGENDIAN
-	a.frameIndex = BSWAP32(a.frameIndex);
-	a.geomIndex = BSWAP32(a.geomIndex);
-	a.flags = BSWAP32(a.flags);
-	a.unused = BSWAP32(a.unused);
-#endif
+	memLittle32(&a.frameIndex);
+	memLittle32(&a.geomIndex);
+	memLittle32(&a.flags);
+	memLittle32(&a.unused);
 
 	atomic = RpAtomicCreate();
 	if(atomic == nil)
@@ -162,11 +158,9 @@ RpClumpGtaStreamRead1(RwStream *stream)
 			return false;
 	}
 
-#ifdef BIGENDIAN
-	gClumpInfo.numAtomics = BSWAP32(gClumpInfo.numAtomics);
-	gClumpInfo.numCameras = BSWAP32(gClumpInfo.numCameras);
-	gClumpInfo.numLights = BSWAP32(gClumpInfo.numLights);
-#endif
+	memLittle32(&gClumpInfo.numAtomics);
+	memLittle32(&gClumpInfo.numCameras);
+	memLittle32(&gClumpInfo.numLights);
 
 	if(!RwStreamFindChunk(stream, rwID_FRAMELIST, nil, &version))
 		return false;

@@ -24,10 +24,8 @@ CDirectory::ReadDirFile(const char *filename)
 	fd = CFileMgr::OpenFile(filename, "rb");
 	while(CFileMgr::Read(fd, (char*)&dirinfo, sizeof(dirinfo)))
 	{
-#ifdef BIGENDIAN
-		dirinfo.offset = BSWAP32(dirinfo.offset);
-		dirinfo.size = BSWAP32(dirinfo.size);
-#endif
+		memLittle32(&dirinfo.offset);
+		memLittle32(&dirinfo.size);
 		AddItem(dirinfo);
 	}
 	CFileMgr::CloseFile(fd);

@@ -164,6 +164,7 @@ CdStreamInitThread(void)
 	ASSERT(gChannelRequestQ.items != nil );
 	gCdStreamSema = sem_open("/semaphore_cd_stream", O_CREAT, 0644, 0);
 
+
 	if (gCdStreamSema == SEM_FAILED) {
 		CDTRACE("failed to create stream semaphore");
 		ASSERT(0);

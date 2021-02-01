@@ -81,9 +81,7 @@ RwTexDictionaryGtaStreamRead(RwStream *stream)
 	if(RwStreamRead(stream, &numTextures, size) != size)
 		return nil;
 
-#ifdef BIGENDIAN
-	numTextures = BSWAP32(numTextures);
-#endif
+	memLittle32(&numTextures);
 
 	texDict = RwTexDictionaryCreate();
 	if(texDict == nil)
@@ -120,9 +118,7 @@ RwTexDictionaryGtaStreamRead1(RwStream *stream)
 	if(RwStreamRead(stream, &numTextures, size) != size)
 		return nil;
 
-#ifdef BIGENDIAN
-	numTextures = BSWAP32(numTextures);
-#endif
+	memLittle32(&numTextures);
 
 	texDict = RwTexDictionaryCreate();
 	if(texDict == nil)

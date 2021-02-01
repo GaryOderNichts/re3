@@ -810,17 +810,11 @@ CAnimManager::LoadAnimFile(int fd, bool compress)
 	float *fbuf = (float*)buf;
 
 	CFileMgr::Read(fd, (char*)&anpk, sizeof(IfpHeader));
-#ifdef BIGENDIAN
-	anpk.size = BSWAP32(anpk.size);
-#endif
+	memLittle32(&anpk.size);
 	if(!CGeneral::faststrncmp(anpk.ident, "ANLF", 4)) {
 		ROUNDSIZE(anpk.size);
 		CFileMgr::Read(fd, buf, anpk.size);
-#ifndef BIGENDIAN
-		numANPK = *(int*)buf;
-#else
 		numANPK = BSWAP32(*(int*)buf);
-#endif
 	} else if(!CGeneral::faststrncmp(anpk.ident, "ANPK", 4)) {
 		CFileMgr::Seek(fd, -8, 1);
 		numANPK = 1;
@@ -829,23 +823,15 @@ CAnimManager::LoadAnimFile(int fd, bool compress)
 	for(i = 0; i < numANPK; i++){
 		// block name
 		CFileMgr::Read(fd, (char*)&anpk, sizeof(IfpHeader));
-#ifdef BIGENDIAN
-		anpk.size = BSWAP32(anpk.size);
-#endif
+		memLittle32(&anpk.size);
 		ROUNDSIZE(anpk.size);
 		CFileMgr::Read(fd, (char*)&info, sizeof(IfpHeader));
-#ifdef BIGENDIAN
-		info.size = BSWAP32(info.size);
-#endif
+		memLittle32(&info.size);
 		ROUNDSIZE(info.size);
 		CFileMgr::Read(fd, buf, info.size);
 		CAnimBlock *animBlock = &ms_aAnimBlocks[ms_numAnimBlocks++];
 		strncpy(animBlock->name, buf+4, 24);
-#ifndef BIGENDIAN
-		animBlock->numAnims = *(int*)buf;
-#else
 		animBlock->numAnims = BSWAP32(*(int*)buf);
-#endif
 
 		animBlock->firstIndex = ms_numAnimations;
 
@@ -854,59 +840,37 @@ CAnimManager::LoadAnimFile(int fd, bool compress)
 
 			// animation name
 			CFileMgr::Read(fd, (char*)&name, sizeof(IfpHeader));
-#ifdef BIGENDIAN
-			name.size = BSWAP32(name.size);
-#endif
+			memLittle32(&name.size);
 			ROUNDSIZE(name.size);
 			CFileMgr::Read(fd, buf, name.size);
 			hier->SetName(buf);
 
 			// DG info has number of nodes/sequences
 			CFileMgr::Read(fd, (char*)&dgan, sizeof(IfpHeader));
-#ifdef BIGENDIAN
-			dgan.size = BSWAP32(dgan.size);
-#endif
+			memLittle32(&dgan.size);
 			ROUNDSIZE(dgan.size);
 			CFileMgr::Read(fd, (char*)&info, sizeof(IfpHeader));
-#ifdef BIGENDIAN
-			info.size = BSWAP32(info.size);
-#endif
+			memLittle32(&info.size);
 			ROUNDSIZE(info.size);
 			CFileMgr::Read(fd, buf, info.size);
-#ifndef BIGENDIAN
-			hier->numSequences = *(int*)buf;
-#else
 			hier->numSequences = BSWAP32(*(int*)buf);
-#endif
 			hier->sequences = new CAnimBlendSequence[hier->numSequences];
 
 			CAnimBlendSequence *seq = hier->sequences;
 			for(k = 0; k < hier->numSequences; k++, seq++){
 				// Each node has a name and key frames
 				CFileMgr::Read(fd, (char*)&cpan, sizeof(IfpHeader));
-#ifdef BIGENDIAN
-				cpan.size = BSWAP32(cpan.size);
-#endif
+				memLittle32(&cpan.size);
 				ROUNDSIZE(dgan.size);
 				CFileMgr::Read(fd, (char*)&anim, sizeof(IfpHeader));
-#ifdef BIGENDIAN
-				anim.size = BSWAP32(anim.size);
-#endif
+				memLittle32(&anim.size);
 				ROUNDSIZE(anim.size);
 				CFileMgr::Read(fd, buf, anim.size);
-#ifndef BIGENDIAN
-				int numFrames = *(int*)(buf+28);
-#else
 				int numFrames = BSWAP32(*(int*)(buf+28));
-#endif
 				seq->SetName(buf);
 #ifdef PED_SKIN
 				if(anim.size == 44)
-#ifndef BIGENDIAN
-					seq->SetBoneTag(*(int*)(buf+40));
-#else
 					seq->SetBoneTag(BSWAP32(*(int*)(buf+40)));
-#endif
 #endif
 				if(numFrames == 0)
 					continue;

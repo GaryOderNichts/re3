@@ -46,16 +46,7 @@
 //TODO: max channels
 //TODO: loop count
 
-#ifdef _WIN32
-#pragma comment( lib, "OpenAL32.lib" )
-#endif
-
-// for user MP3s
-#ifdef _WIN32
-#include <direct.h>
-#include <shobjidl.h>
-#include <shlguid.h>
-#elif defined __WIIU__
+#ifdef __WIIU__
 extern "C" char *_getcwd (char *__buf, size_t __size);
 #else
 #define _getcwd getcwd
@@ -267,10 +258,9 @@ release_existing()
 		alcSuspendContext(ALContext);
 		alcDestroyContext(ALContext);
 	}
-
 	if ( ALDevice )
 		alcCloseDevice(ALDevice);
-
+	
 	ALDevice = NULL;
 	ALContext = NULL;
 	
@@ -2021,11 +2011,11 @@ cSampleManager::InitialiseSampleBanks(void)
 	// fix endianess
 	for (int i = 0; i < TOTAL_AUDIO_SAMPLES; i++)
 	{
-		m_aSamples[i].nOffset = BSWAP32(m_aSamples[i].nOffset);
-		m_aSamples[i].nSize = BSWAP32(m_aSamples[i].nSize);
-		m_aSamples[i].nFrequency = BSWAP32(m_aSamples[i].nFrequency);
-		m_aSamples[i].nLoopStart = BSWAP32(m_aSamples[i].nLoopStart);
-		m_aSamples[i].nLoopEnd = BSWAP32(m_aSamples[i].nLoopEnd);
+		memLittle32(&m_aSamples[i].nOffset);
+		memLittle32(&m_aSamples[i].nSize);
+		memLittle32(&m_aSamples[i].nFrequency);
+		memLittle32(&m_aSamples[i].nLoopStart);
+		memLittle32(&m_aSamples[i].nLoopEnd);
 	}
 #endif
 #ifdef OPUS_SFX
