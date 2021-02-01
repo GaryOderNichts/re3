@@ -351,7 +351,11 @@ void SaveINIControllerSettings()
 	StoreIni("Controller", "JoystickName", gSelectedJoystickName, 128);
 #endif
 	StoreIni("Controller", "PadButtonsInited", ControlsManager.ms_padButtonsInited);
+#ifdef WIIU_CHANNEL
+	cfg.write_file("/vol/external01/wiiu/apps/re3/re3.ini");
+#else
 	cfg.write_file("re3.ini");
+#endif
 }
 
 bool LoadINISettings()
