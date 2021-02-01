@@ -872,7 +872,7 @@ CMenuManager::CheckCodesForControls(int typeOfControl)
 #endif
 	}
 
-	if (escPressed) {
+	if (escPressed || DisplayComboButtonErrMsg /* temporary fix until target combos are properly fixed in re3 */) {
 		pControlEdit = nil;
 		m_bWaitingForNewKeyBind = false;
 		m_KeyPressedCode = -1;
