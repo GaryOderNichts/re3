@@ -33,12 +33,8 @@ typedef OSSemaphore sem_t;
 
 #define SEM_FAILED (NULL)
 
-#define MAX_SEMAPHORES 64
-static sem_t* wiiu_semaphores[MAX_SEMAPHORES] = { 0 };
-
 static sem_t *sem_open(const char *name, int oflag, mode_t mode, unsigned int value)
 {
-	// just ignoring the name should be fine for now since each sem is only init once
 	sem_t* sem = (sem_t*) calloc(1, sizeof(sem_t));
 	OSInitSemaphore(sem, value);
 	return sem;
